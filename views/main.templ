@@ -1,0 +1,23 @@
+package views
+
+templ Hello(name string) {
+	<div>
+		Hello, { name }!
+	</div>
+}
+
+templ Index(name string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>Testing TEMPL</title>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<script src="https://cdn.tailwindcss.com/3.4.0"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+		</head>
+		<body>
+			@Hello(name)
+		</body>
+	</html>
+}
