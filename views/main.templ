@@ -11,13 +11,45 @@ templ Account(account services.Account, editMode bool) {
 			<td>{ account.Currency }</td>
 			<td>{ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }</td>
 			<td>{ account.Description }</td>
-			<td><button type="button" hx-get={ fmt.Sprintf("/accounts/%v?edit=true", account.Id) } hx-target="closest tr" hx-swap="outerHTML">(edit*)</button></td>
+			<td>
+				<button
+					type="button"
+					hx-get={ fmt.Sprintf("/accounts/%v?edit=true", account.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					(edit*)
+				</button>
+			</td>
 		} else {
-			<td>->:<input name="account_name" type="text" placeholder="account name" value={ account.Name }/></td>
+			<td>~>:<input name="account_name" type="text" placeholder="account name" value={ account.Name }/></td>
 			<td>{ account.Currency }</td>
-			<td>->:<input name="amount" type="text" placeholder="amount" pattern="[0-9]+\\.?[0-9]*" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/></td>
-			<td>->:<input name="description" type="text" placeholder="description" value={ account.Description }/></td>
-			<td class="table-btn"><span>(</span><button type="button" hx-post={ fmt.Sprintf("/accounts/%v/save", account.Id) } hx-target="closest tr" hx-include="closest tr" hx-swap="outerHTML">save</button><span>|</span><button type="button" hx-get={ fmt.Sprintf("/accounts/%v", account.Id) } hx-target="closest tr" hx-swap="outerHTML">cancel</button><span>)</span></td>
+			<td>~>:<input name="amount" type="text" placeholder="amount" pattern="[0-9]+\\.?[0-9]*" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/></td>
+			<td>~>:<input name="description" type="text" placeholder="description" value={ account.Description }/></td>
+			<td class="table-btn">
+				<span>(</span>
+				<button
+					_="on mouseenter toggle .bg-emerald-400 until mouseleave"
+					type="button"
+					hx-post={ fmt.Sprintf("/accounts/%v/save", account.Id) }
+					hx-target="closest tr"
+					hx-include="closest tr"
+					hx-swap="outerHTML"
+				>
+					save
+				</button>
+				<span>|</span>
+				<button
+					_="on mouseenter toggle .bg-rose-400 until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/accounts/%v", account.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					cancel
+				</button>
+				<span>)</span>
+			</td>
 		}
 	</tr>
 }
@@ -49,6 +81,7 @@ templ Index(accounts []services.Account) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<script src="https://cdn.tailwindcss.com/3.4.0"></script>
+			<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
 			<style>
 				input {
