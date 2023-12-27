@@ -1,4 +1,4 @@
-package services
+package greed
 
 type Account struct {
 	Id          uint

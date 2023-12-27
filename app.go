@@ -16,7 +16,7 @@ func renderTempl(c echo.Context, t templ.Component) error {
 	return t.Render(context.Background(), c.Response().Writer)
 }
 
-var accounts = map[uint]services.Account{
+var accounts = map[uint]greed.Account{
 	1: {Id: 1, Name: "Visa Card", Currency: "RSD", Amount: 10_000},
 	2: {Id: 2, Name: "Cash", Currency: "EUR", Amount: 2_000},
 }
