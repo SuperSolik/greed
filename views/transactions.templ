@@ -1,0 +1,126 @@
+package views
+
+import "strconv"
+import "fmt"
+import "supersolik/greed/pkg"
+
+templ Transaction(transaction greed.Transaction, accounts []greed.Account, categories []string, editMode bool) {
+	<tr>
+		if !editMode {
+			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Category }</td>
+			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Account }</td>
+			<td class="max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Timestamp.UTC().Format("2006-01-02 15:04:05") }</td>
+			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }</td>
+			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Description }</td>
+			<td class="max--52 pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/transactions/%v?edit=true", transaction.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					(edit*)
+				</button>
+			</td>
+		} else {
+			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full">
+					<span>*</span>
+					<select class="appearance-none bg-transparent w-full" id="category" name="category">
+						for _, c := range categories {
+							if c == transaction.Category {
+								<option value={ c } selected>{ c }</option>
+							} else {
+								<option value={ c }>{ c }</option>
+							}
+						}
+					</select>
+				</div>
+			</td>
+			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full">
+					<span>*</span>
+					<select class="appearance-none bg-transparent w-full" id="account" name="account">
+						for _, a := range accounts {
+							if a.Name == transaction.Account {
+								<option value={ a.Name } selected>{ a.Name }</option>
+							} else {
+								<option value={ a.Name }>{ a.Name }</option>
+							}
+						}
+					</select>
+				</div>
+			</td>
+			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full">
+					<span>*</span>
+					<input class="w-full" name="timestamp" type="datetime-local" placeholder="timestamp" value={ transaction.Timestamp.Format("2006-01-02T15:04:05") }/>
+				</div>
+			</td>
+			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full">
+					<span>*</span>
+					<input class="w-full" name="amount" type="text" placeholder="amount" pattern="[0-9]+\\.?[0-9]*" value={ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }/>
+				</div>
+			</td>
+			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full">
+					<span>*</span>
+					<input class="w-full" name="description" type="text" placeholder="description" value={ transaction.Description }/>
+				</div>
+			</td>
+			<td class="max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">
+				<span>(</span>
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-post={ fmt.Sprintf("/transactions/%v/save", transaction.Id) }
+					hx-target="closest tr"
+					hx-include="closest tr"
+					hx-swap="outerHTML"
+				>
+					save+
+				</button>
+				<span>|</span>
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/transactions/%v", transaction.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					cancel-
+				</button>
+				<span>)</span>
+			</td>
+		}
+	</tr>
+}
+
+templ Transactions(transactions []greed.Transaction, accounts []greed.Account, categories []string) {
+	<div class="p-3">list Transactions[{ strconv.Itoa(len(transactions)) }]:</div>
+	<div class="px-3">
+		<table class="text-left max-w-screen-lg">
+			<thead>
+				<tr>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Category</th>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Account</th>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">When</th>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Amount</th>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Description</th>
+					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">
+						<button _="on mouseenter toggle .uppercase until mouseleave" type="button">
+							[new+]
+						</button>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, t := range transactions {
+					@Transaction(t, accounts, categories, false)
+				}
+			</tbody>
+		</table>
+	</div>
+}

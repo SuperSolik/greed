@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"supersolik/greed/services"
+	"supersolik/greed/pkg"
 	"supersolik/greed/views"
 
 	"github.com/a-h/templ"
@@ -17,26 +17,32 @@ func renderTempl(c echo.Context, t templ.Component) error {
 	return t.Render(context.Background(), c.Response().Writer)
 }
 
-var accounts = map[uint]greed.Account{
-	1: {Id: 1, Name: "Visa Card", Currency: "RSD", Amount: 10_000},
-	2: {Id: 2, Name: "Cash", Currency: "EUR", Amount: 2_000},
-}
-
-func ExtractValues[K comparable, V any](m map[K]V) []V {
-	var values []V
-	for _, value := range m {
-		values = append(values, value)
-	}
-
-	return values
-}
-
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 
 	e.GET("/", func(c echo.Context) error {
-		err := renderTempl(c, views.Index(ExtractValues(accounts)))
+		err := renderTempl(c, views.Page(
+			views.Accounts(
+				greed.ExtractValues(greed.AccountsList),
+			),
+		))
+
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "unable to render template")
+		}
+
+		return err
+	})
+
+	e.GET("/transactions", func(c echo.Context) error {
+		err := renderTempl(c, views.Page(
+			views.Transactions(
+				greed.ExtractValues(greed.TransactionsList),
+				greed.ExtractValues(greed.AccountsList),
+				greed.CategoriesList,
+			),
+		))
 
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "unable to render template")
@@ -62,7 +68,7 @@ func main() {
 			edit = false
 		}
 
-		account := accounts[uint(accountId)]
+		account := greed.AccountsList[uint(accountId)]
 
 		err = renderTempl(c, views.Account(account, edit))
 
@@ -80,7 +86,7 @@ func main() {
 			return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse %v to account id", accountId))
 		}
 
-		account := accounts[uint(accountId)]
+		account := greed.AccountsList[uint(accountId)]
 
 		amount := c.FormValue("amount")
 		parsedAmount, err := strconv.ParseFloat(amount, 32)
@@ -90,7 +96,7 @@ func main() {
 		}
 
 		account.Update(c.FormValue("account_name"), float32(parsedAmount), c.FormValue("description"))
-		accounts[uint(accountId)] = account
+		greed.AccountsList[uint(accountId)] = account
 
 		err = renderTempl(c, views.Account(account, false))
 
@@ -100,5 +106,38 @@ func main() {
 
 		return err
 	})
+
+	e.GET("/transactions/:id", func(c echo.Context) error {
+		transactionId, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse %v to transaction id", transactionId))
+		}
+
+		var edit bool
+
+		editParam := c.QueryParam("edit")
+
+		if editParam == "true" {
+			edit = true
+		} else {
+			edit = false
+		}
+
+		transaction := greed.TransactionsList[uint(transactionId)]
+
+		err = renderTempl(c, views.Transaction(transaction, greed.ExtractValues(greed.AccountsList), greed.CategoriesList, edit))
+
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "unable to render template")
+		}
+
+		return err
+	})
+
+	e.POST("/transactions/:id/save", func(c echo.Context) error {
+		return c.String(http.StatusBadRequest, fmt.Sprintf("TODO ME LATER"))
+	})
+
 	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
 }

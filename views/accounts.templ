@@ -2,7 +2,7 @@ package views
 
 import "strconv"
 import "fmt"
-import "supersolik/greed/services"
+import "supersolik/greed/pkg"
 
 templ Account(account greed.Account, editMode bool) {
 	<tr>
@@ -11,7 +11,7 @@ templ Account(account greed.Account, editMode bool) {
 			<td class="max-w-32 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Currency }</td>
 			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }</td>
 			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Description }</td>
-			<td class="max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">
+			<td class="max--52 pr-3 py-1.5 font-normal border-b border-solid border-black">
 				<button
 					_="on mouseenter toggle .uppercase until mouseleave"
 					type="button"
@@ -71,6 +71,7 @@ templ Account(account greed.Account, editMode bool) {
 }
 
 templ Accounts(accounts []greed.Account) {
+	<div class="p-3">list Accounts[{ strconv.Itoa(len(accounts)) }]:</div>
 	<div class="px-3">
 		<table class="text-left max-w-screen-lg">
 			<thead>
@@ -93,58 +94,4 @@ templ Accounts(accounts []greed.Account) {
 			</tbody>
 		</table>
 	</div>
-}
-
-templ Index(accounts []greed.Account) {
-	<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<title>$$$ tracker</title>
-			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<script src="https://cdn.tailwindcss.com/3.4.0"></script>
-			<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
-			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
-		</head>
-		<body class="font-mono font-normal">
-			<header>
-				<div class="flex flex-row p-3 ">
-					<div class="mr-3">
-						<a href="/">Greed ($$$) tracker</a>
-					</div>
-					<div>
-						<nav>
-							<ul class="flex flex-row space-x-1.5">
-								<li>
-									<div>
-										|>
-									</div>
-								</li>
-								<li>
-									<a
-										_="on mouseenter toggle .uppercase until mouseleave"
-										href="#"
-									>[Stats]</a>
-								</li>
-								<li>
-									<a
-										_="on mouseenter toggle .uppercase until mouseleave"
-										href="#"
-									>[Accounts]</a>
-								</li>
-								<li>
-									<a
-										_="on mouseenter toggle .uppercase until mouseleave"
-										href="#"
-									>[Transactions]</a>
-								</li>
-							</ul>
-						</nav>
-					</div>
-				</div>
-			</header>
-			<div class="p-3">list Accounts[{ strconv.Itoa(len(accounts)) }]:</div>
-			@Accounts(accounts)
-		</body>
-	</html>
 }
