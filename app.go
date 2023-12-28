@@ -10,6 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func renderTempl(c echo.Context, t templ.Component) error {
@@ -32,6 +33,8 @@ func ExtractValues[K comparable, V any](m map[K]V) []V {
 
 func main() {
 	e := echo.New()
+	e.Use(middleware.Logger())
+
 	e.GET("/", func(c echo.Context) error {
 		err := renderTempl(c, views.Index(ExtractValues(accounts)))
 
