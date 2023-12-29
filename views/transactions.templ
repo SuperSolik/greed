@@ -2,14 +2,30 @@ package views
 
 import "strconv"
 import "fmt"
+import "time"
 import "supersolik/greed/pkg"
+
+templ DateTimePicker(timestamp time.Time) {
+	<input class="h-full" type="date" name="date" value={ timestamp.Format("2006-01-02") }/>
+	<select class="appearance-none bg-transparent h-full" id="hours" name="hours">
+		for h := 0; h < 24; h++ {
+			<option value={ fmt.Sprintf("%02d", h) }>{ fmt.Sprintf("%02d", h) }</option>
+		}
+	</select>
+	<span class="h-full">:</span>
+	<select class="appearance-none bg-transparent h-full" id="minutes" name="minutes">
+		for m := 0; m < 60; m++ {
+			<option value={ fmt.Sprintf("%02d", m) }>{ fmt.Sprintf("%02d", m) }</option>
+		}
+	</select>
+}
 
 templ Transaction(transaction greed.Transaction, accounts []greed.Account, categories []string, editMode bool) {
 	<tr>
 		if !editMode {
 			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Category }</td>
 			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Account }</td>
-			<td class="max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Timestamp.UTC().Format("2006-01-02 15:04:05") }</td>
+			<td class="max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Timestamp.UTC().Format("02-01-2006 15:04") }</td>
 			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }</td>
 			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">{ transaction.Description }</td>
 			<td class="max--52 pr-3 py-1.5 font-normal border-b border-solid border-black">
@@ -55,13 +71,13 @@ templ Transaction(transaction greed.Transaction, accounts []greed.Account, categ
 			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					<input class="w-full" name="timestamp" type="datetime-local" placeholder="timestamp" value={ transaction.Timestamp.Format("2006-01-02T15:04:05") }/>
+					@DateTimePicker(transaction.Timestamp)
 				</div>
 			</td>
 			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					<input class="w-full" name="amount" type="text" placeholder="amount" pattern="[0-9]+\\.?[0-9]*" value={ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }/>
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }/>
 				</div>
 			</td>
 			<td class="pr-3 py-1.5 font-normal border-b border-solid border-black">

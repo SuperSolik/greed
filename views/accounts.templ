@@ -33,7 +33,7 @@ templ Account(account greed.Account, editMode bool) {
 			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					<input class="w-full" name="amount" type="text" placeholder="amount" pattern="[0-9]+\\.?[0-9]*" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/>
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/>
 				</div>
 			</td>
 			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">
