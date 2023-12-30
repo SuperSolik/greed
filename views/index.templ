@@ -44,5 +44,10 @@ templ Page(content templ.Component) {
 			</header>
 			@content
 		</body>
+		<script>
+			function getTimeZone() {
+				return Intl.DateTimeFormat().resolvedOptions().timeZone
+			}
+		</script>
 	</html>
 }

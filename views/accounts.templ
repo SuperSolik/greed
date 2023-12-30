@@ -7,11 +7,11 @@ import "supersolik/greed/pkg"
 templ Account(account greed.Account, editMode bool) {
 	<tr>
 		if !editMode {
-			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Name }</td>
-			<td class="max-w-32 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Currency }</td>
-			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }</td>
-			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Description }</td>
-			<td class="max--52 pr-3 py-1.5 font-normal border-b border-solid border-black">
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Name }</td>
+			<td class="max-w-32 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Currency }</td>
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }</td>
+			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Description }</td>
+			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
 				<button
 					_="on mouseenter toggle .uppercase until mouseleave"
 					type="button"
@@ -23,48 +23,50 @@ templ Account(account greed.Account, editMode bool) {
 				</button>
 			</td>
 		} else {
-			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
 					<input class="w-full" name="account_name" type="text" placeholder="account name" value={ account.Name }/>
 				</div>
 			</td>
-			<td class="max-w-32 pr-3 py-1.5 font-normal border-b border-solid border-black">{ account.Currency }</td>
-			<td class="max-w-48 pr-3 py-1.5 font-normal border-b border-solid border-black">
+			<td class="max-w-32 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Currency }</td>
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
 					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/>
 				</div>
 			</td>
-			<td class="max-w-80 pr-3 py-1.5 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
+			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full items-stretch">
 					<span>*</span>
 					<input class="w-full" name="description" type="text" placeholder="description" value={ account.Description }/>
 				</div>
 			</td>
-			<td class="w-fit max-w-52 pr-3 py-1.5 font-normal border-b border-solid border-black">
-				<span>(</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-post={ fmt.Sprintf("/accounts/%v/save", account.Id) }
-					hx-target="closest tr"
-					hx-include="closest tr"
-					hx-swap="outerHTML"
-				>
-					save+
-				</button>
-				<span>|</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-get={ fmt.Sprintf("/accounts/%v", account.Id) }
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					cancel-
-				</button>
-				<span>)</span>
+			<td class="w-fit max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+				<div class="h-full flex">
+					<span>(</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-post={ fmt.Sprintf("/accounts/%v/save", account.Id) }
+						hx-target="closest tr"
+						hx-include="closest tr"
+						hx-swap="outerHTML"
+					>
+						save+
+					</button>
+					<span>|</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-get={ fmt.Sprintf("/accounts/%v", account.Id) }
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+					>
+						cancel-
+					</button>
+					<span>)</span>
+				</div>
 			</td>
 		}
 	</tr>
@@ -73,14 +75,14 @@ templ Account(account greed.Account, editMode bool) {
 templ Accounts(accounts []greed.Account) {
 	<div class="p-3">list Accounts[{ strconv.Itoa(len(accounts)) }]:</div>
 	<div class="px-3">
-		<table class="text-left max-w-screen-lg">
+		<table class="text-left max-w-screen-lg border-collapse">
 			<thead>
 				<tr>
-					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Name</th>
-					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Amount</th>
-					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Currency</th>
-					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">Description</th>
-					<th class="font-normal tracking-wider pr-3 py-1.5 border-b border-solid border-black">
+					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Name</th>
+					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Amount</th>
+					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Currency</th>
+					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Description</th>
+					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">
 						<button _="on mouseenter toggle .uppercase until mouseleave" type="button">
 							[new+]
 						</button>

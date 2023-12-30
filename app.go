@@ -136,8 +136,18 @@ func main() {
 	})
 
 	e.POST("/transactions/:id/save", func(c echo.Context) error {
+		formValues, err := c.FormParams()
+
+		if err != nil {
+			return c.String(http.StatusBadRequest, fmt.Sprintf("TODO ME LATER"))
+		}
+		fmt.Println("----transaction form start----")
+		for k, v := range formValues {
+			fmt.Printf("transaction form %v=%v\n", k, v)
+		}
+		fmt.Println("----transaction form end----")
+
 		return c.String(http.StatusBadRequest, fmt.Sprintf("TODO ME LATER"))
 	})
-
-	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
