@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"supersolik/greed/pkg"
 	"supersolik/greed/views"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -88,14 +90,13 @@ func main() {
 
 		account := greed.AccountsList[uint(accountId)]
 
-		amount := c.FormValue("amount")
-		parsedAmount, err := strconv.ParseFloat(amount, 32)
+		parsedAmount, err := greed.ParseBigFloat(c.FormValue("amount"))
 
 		if err != nil {
-			return c.String(http.StatusNotAcceptable, fmt.Sprintf("Provided amount=%v is not valid numeric value", amount))
+			return err
 		}
 
-		account.Update(c.FormValue("account_name"), float32(parsedAmount), c.FormValue("description"))
+		account.Update(c.FormValue("account_name"), parsedAmount, c.FormValue("description"))
 		greed.AccountsList[uint(accountId)] = account
 
 		err = renderTempl(c, views.Account(account, false))
@@ -136,18 +137,66 @@ func main() {
 	})
 
 	e.POST("/transactions/:id/save", func(c echo.Context) error {
+		transactionId, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return err
+		}
+
+		transaction := greed.TransactionsList[uint(transactionId)]
+
 		formValues, err := c.FormParams()
 
 		if err != nil {
-			return c.String(http.StatusBadRequest, fmt.Sprintf("TODO ME LATER"))
+			return err
 		}
+
 		fmt.Println("----transaction form start----")
 		for k, v := range formValues {
 			fmt.Printf("transaction form %v=%v\n", k, v)
 		}
 		fmt.Println("----transaction form end----")
 
-		return c.String(http.StatusBadRequest, fmt.Sprintf("TODO ME LATER"))
+		// parse datetime
+		date := c.FormValue("date")
+		hour := c.FormValue("hours")
+		minutes := c.FormValue("minutes")
+		location, err := time.LoadLocation(c.FormValue("tz"))
+
+		if err != nil {
+			return nil
+		}
+
+		// Constructing the time layout
+		layout := "2006-01-02 15:04"
+		inputTime := fmt.Sprintf("%s %s:%s", date, hour, minutes)
+
+		// Parsing the input time string
+		resultTime, err := time.ParseInLocation(layout, inputTime, location)
+		if err != nil {
+			return err
+		}
+
+		// Print the result time
+		fmt.Println("Result Time:", resultTime)
+
+		amount := c.FormValue("amount")
+		parsedAmount, _, err := big.ParseFloat(amount, 10, 52, big.ToNearestEven)
+
+		if err != nil {
+			return err
+		}
+
+		new_account := c.FormValue("account")
+		new_category := c.FormValue("category")
+		new_description := c.FormValue("description")
+
+		transaction.Update(new_account, parsedAmount, false, new_category, new_description, resultTime)
+
+		greed.TransactionsList[transaction.Id] = transaction
+
+		return renderTempl(c, views.Transaction(transaction, greed.ExtractValues(greed.AccountsList), greed.CategoriesList, false))
+
 	})
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
 }

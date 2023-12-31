@@ -43,8 +43,8 @@ templ Transaction(transaction greed.Transaction, accounts []greed.Account, categ
 		if !editMode {
 			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Category }</td>
 			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Account }</td>
-			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Timestamp.Format("02-01-2006 15:04") }</td>
-			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }</td>
+			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.CreatedAt.Format("Jan 02 2006 15:04") }</td>
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
 			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
 			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
 				<button
@@ -89,13 +89,13 @@ templ Transaction(transaction greed.Transaction, accounts []greed.Account, categ
 			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					@DateTimePicker(transaction.Timestamp)
+					@DateTimePicker(transaction.CreatedAt)
 				</div>
 			</td>
 			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ strconv.FormatFloat(float64(transaction.Amount), 'f', -1, 64) }/>
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ transaction.Amount.String() }/>
 				</div>
 			</td>
 			<td class="pr-3 py-2 font-normal border-b border-solid border-black">

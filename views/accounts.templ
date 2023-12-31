@@ -9,7 +9,7 @@ templ Account(account greed.Account, editMode bool) {
 		if !editMode {
 			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Name }</td>
 			<td class="max-w-32 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Currency }</td>
-			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }</td>
+			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Amount.String() }</td>
 			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Description }</td>
 			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
 				<button
@@ -33,7 +33,7 @@ templ Account(account greed.Account, editMode bool) {
 			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">
 				<div class="flex flex-row w-full">
 					<span>*</span>
-					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ strconv.FormatFloat(float64(account.Amount), 'f', -1, 64) }/>
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ account.Amount.String() }/>
 				</div>
 			</td>
 			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">
