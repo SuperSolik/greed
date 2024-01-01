@@ -122,25 +122,41 @@ func (d Database) Accounts() ([]Account, error) {
 	return accounts, nil
 }
 
+func (d Database) AccountById(id int64) (Account, error) {
+	// An album to hold data from the returned row.
+	a := Account{Id: id}
+
+	var amount float64
+
+	row := d.Handle.QueryRow("select name, amount, currency, description from accounts where id = ?", id)
+	if err := row.Scan(&a.Name, &amount, &a.Currency, &a.Description); err != nil {
+		return a, err
+	}
+
+	a.Amount = big.NewFloat(amount)
+
+	return a, nil
+}
+
 func (d Database) Transactions() ([]Transaction, error) {
 	// An albums slice to hold data from returned rows.
 	var transactions []Transaction
 
 	query := `
-SELECT
-    transactions.id AS transaction_id,
-    accounts.id AS account_id,
-    accounts.name AS account_name,
+select
+    transactions.id as transaction_id,
+    accounts.id as account_id,
+    accounts.name as account_name,
     transactions.amount,
     transactions.is_expense,
-    categories.id AS category_id,
-    categories.name AS category_name,
+    categories.id as category_id,
+    categories.name as category_name,
     transactions.created_at,
     transactions.description
-FROM
+from
     transactions
-JOIN accounts ON transactions.account_id = accounts.id
-LEFT JOIN categories ON transactions.category_id = categories.id;
+join accounts on transactions.account_id = accounts.id
+left join categories on transactions.category_id = categories.id;
 `
 
 	rows, err := d.Handle.Query(query)
@@ -185,6 +201,56 @@ LEFT JOIN categories ON transactions.category_id = categories.id;
 	}
 
 	return transactions, nil
+}
+
+func (d Database) TransactionById(id int64) (Transaction, error) {
+	// An album to hold data from the returned row.
+	t := Transaction{Id: id}
+	var a Account
+
+	var categoryId sql.NullInt64
+	var categoryName sql.NullString
+
+	var amount float64
+	var createdAt string
+
+	query := `
+select
+    accounts.id as account_id,
+    accounts.name as account_name,
+    transactions.amount,
+    transactions.is_expense,
+    categories.id as category_id,
+    categories.name as category_name,
+    transactions.created_at,
+    transactions.description
+from
+    transactions
+join accounts on transactions.account_id = accounts.id
+left join categories on transactions.category_id = categories.id
+where transactions.id = ?;
+`
+	row := d.Handle.QueryRow(query, id)
+	if err := row.Scan(&a.Id, &a.Name, &amount, &t.IsExpense, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
+		return t, fmt.Errorf("fetch transactions row failed: %v", err)
+	}
+	// float64 -> bigFloat
+	t.Amount = big.NewFloat(amount)
+	t.Account = a
+
+	parsedCreatedAt, err := time.Parse(DATETIME_DB_LAYOUT, createdAt)
+
+	if err != nil {
+		return t, err
+	}
+
+	t.CreatedAt = parsedCreatedAt
+
+	if categoryId.Valid {
+		t.Category = &Category{Id: categoryId.Int64, Name: categoryName.String}
+	}
+
+	return t, nil
 }
 
 func (d Database) Categories() ([]Category, error) {

@@ -26,13 +26,21 @@ func main() {
 
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+	} else {
+		fmt.Println("---accounts---")
 	}
-
-	fmt.Println("---accounts---")
 
 	for i, a := range accounts {
 		fmt.Printf("%v: %v\n", i, a)
+	}
+
+	fmt.Println("---account non existing---")
+
+	a, err := db.AccountById(200)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", a)
 	}
 
 	fmt.Println("---transactions---")
@@ -41,25 +49,52 @@ func main() {
 
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+	} else {
+		for i, t := range transactions {
+			fmt.Printf("%v: %v\n", i, t)
+		}
 	}
 
-	for i, t := range transactions {
-		fmt.Printf("%v: %v\n", i, t)
-	}
+	fmt.Println("---categories---")
 
 	categories, err := db.Categories()
 
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+	} else {
+		for i, a := range categories {
+			fmt.Printf("%v: %v\n", i, a)
+		}
 	}
 
-	fmt.Println("---categories---")
+	fmt.Println("---account 1---")
 
-	for i, a := range categories {
-		fmt.Printf("%v: %v\n", i, a)
+	a, err = db.AccountById(1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", a)
 	}
+
+	fmt.Println("---transaction 1---")
+
+	t, err := db.TransactionById(1)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", t)
+	}
+
+	fmt.Println("---transaction non existing---")
+
+	t, err = db.TransactionById(200)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", t)
+	}
+
 	os.Exit(0)
 
 	// e := echo.New()
