@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
-	"supersolik/greed/pkg"
+	greed "supersolik/greed/pkg"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -41,6 +43,33 @@ func main() {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("%v\n", a)
+	}
+
+	fmt.Println("---create account---")
+
+	a, err = db.CreateAccount("test account", big.NewFloat(420.69), "USD", "")
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", a)
+	}
+
+	fmt.Println("---update account---")
+
+	a.Currency = "RSD"
+	a.Description = "some new description"
+	a.Amount = a.Amount.SetFloat64(69.420)
+	a.Name = "BRAND NEW NAME"
+
+	fmt.Printf("%v\n", a)
+
+	rowsUpdated, err := db.UpdateAccount(a)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v, rows updated %v\n", a, rowsUpdated)
 	}
 
 	fmt.Println("---transactions---")
@@ -95,6 +124,32 @@ func main() {
 		fmt.Printf("%v\n", t)
 	}
 
+	fmt.Println("---create transaction---")
+
+	t, err = db.CreateTransaction(a, big.NewFloat(123.123), false, &categories[0], time.Now(), "some description")
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", t)
+	}
+
+	fmt.Println("---update transaction---")
+
+	t.Amount = t.Amount.SetFloat64(40404.500)
+	t.Description = "new value"
+	t.Category = &categories[1]
+	t.IsExpense = true
+	t.Account = accounts[2]
+
+	rowsUpdated, err = db.UpdateTransaction(t)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%v\n", t)
+	}
+	os.Exit(0)
 	os.Exit(0)
 
 	// e := echo.New()
