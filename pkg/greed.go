@@ -1,12 +1,53 @@
 package greed
 
 import (
+	"fmt"
 	"math/big"
+	"os"
 	"time"
+
+	"database/sql"
+
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	_ "modernc.org/sqlite"
 )
 
+type Database struct {
+	Handle *sql.DB
+}
+
+func GetDbUrl() string {
+	url := os.Getenv("DB_URL")
+
+	if url == "" {
+		url = "file:///tmp/db.sqlite"
+	}
+	return url
+}
+
+func ConnectDb() (Database, error) {
+	url := GetDbUrl()
+
+	var database Database
+
+	db, err := sql.Open("libsql", url)
+	if err != nil {
+		return database, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return database, nil
+	}
+
+	fmt.Printf("DB %v connected\n", url)
+
+	database.Handle = db
+	return database, nil
+}
+
 type Account struct {
-	Id          uint
+	Id          int64
 	Name        string
 	Amount      *big.Float
 	Currency    string
@@ -15,13 +56,26 @@ type Account struct {
 
 // repr of Transaction for rendering
 type Transaction struct {
-	Id          uint
-	Account     string
+	Id          int64
+	Account     Account
 	Amount      *big.Float
 	IsExpense   bool
-	Category    string
+	Category    *Category // optional category
 	CreatedAt   time.Time
 	Description string
+}
+
+type Category struct {
+	Id   int64
+	Name string
+}
+
+// need this to render the transactions with empty category
+func (c *Category) RenderName() string {
+	if c == nil {
+		return ""
+	}
+	return c.Name
 }
 
 func (acc *Account) Update(name string, amount *big.Float, description string) {
@@ -30,7 +84,7 @@ func (acc *Account) Update(name string, amount *big.Float, description string) {
 	acc.Description = description
 }
 
-func (t *Transaction) Update(account string, amount *big.Float, isExpense bool, category string, description string, createdAt time.Time) {
+func (t *Transaction) Update(account Account, amount *big.Float, isExpense bool, category *Category, description string, createdAt time.Time) {
 	t.Account = account
 	t.Amount = amount
 	t.IsExpense = isExpense
@@ -39,35 +93,122 @@ func (t *Transaction) Update(account string, amount *big.Float, isExpense bool, 
 	t.CreatedAt = createdAt
 }
 
-var AccountsList = map[uint]Account{
-	1: {Id: 1, Name: "Visa Card", Currency: "RSD", Amount: big.NewFloat(10000)},
-	2: {Id: 2, Name: "Cash", Currency: "EUR", Amount: big.NewFloat(2000)},
-}
+func (d Database) Accounts() ([]Account, error) {
+	// An albums slice to hold data from returned rows.
+	var accounts []Account
 
-var TransactionsList = map[uint]Transaction{
-	1: {Id: 1, Account: "Visa Card", Amount: big.NewFloat(100), IsExpense: true, Category: "Groceries", CreatedAt: time.Now(), Description: "some"},
-	2: {Id: 2, Account: "Cash", Amount: big.NewFloat(50), IsExpense: false, Category: "Salary", CreatedAt: time.Now(), Description: "test"},
-	3: {Id: 3, Account: "Visa Card", Amount: big.NewFloat(210), IsExpense: true, Category: "Groceries", CreatedAt: time.Now(), Description: "some"},
-	4: {Id: 4, Account: "Cash", Amount: big.NewFloat(75), IsExpense: false, Category: "Salary", CreatedAt: time.Now(), Description: "test"},
-}
+	rows, err := d.Handle.Query("select * from accounts order by id asc")
+	if err != nil {
+		return nil, fmt.Errorf("fetch accounts failed: %v", err)
+	}
+	defer rows.Close()
 
-var CategoriesList = []string{
-	"Groceries",
-	"Salary",
-	"Fun",
-	"Taxes",
-}
-
-func ExtractValues[K comparable, V any](m map[K]V) []V {
-	var values []V
-	for _, value := range m {
-		values = append(values, value)
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for rows.Next() {
+		var a Account
+		var amount float64
+		if err := rows.Scan(&a.Id, &a.Name, &amount, &a.Currency, &a.Description); err != nil {
+			return nil, fmt.Errorf("fetch accounts row failed: %v", err)
+		}
+		// float64 -> bigFloat
+		a.Amount = big.NewFloat(amount)
+		accounts = append(accounts, a)
 	}
 
-	return values
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during accounts iteration: %v", err)
+	}
+
+	return accounts, nil
 }
 
-func ParseBigFloat(x string) (*big.Float, error) {
-	parsedX, _, err := big.ParseFloat(x, 10, 53, big.ToNearestEven)
-	return parsedX, err
+func (d Database) Transactions() ([]Transaction, error) {
+	// An albums slice to hold data from returned rows.
+	var transactions []Transaction
+
+	query := `
+SELECT
+    transactions.id AS transaction_id,
+    accounts.id AS account_id,
+    accounts.name AS account_name,
+    transactions.amount,
+    transactions.is_expense,
+    categories.id AS category_id,
+    categories.name AS category_name,
+    transactions.created_at,
+    transactions.description
+FROM
+    transactions
+JOIN accounts ON transactions.account_id = accounts.id
+LEFT JOIN categories ON transactions.category_id = categories.id;
+`
+
+	rows, err := d.Handle.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("fetch transactions failed: %v", err)
+	}
+	defer rows.Close()
+
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for rows.Next() {
+		var t Transaction
+		var a Account
+		var categoryId sql.NullInt64
+		var categoryName sql.NullString
+
+		var amount float64
+		var createdAt string
+		if err := rows.Scan(&t.Id, &a.Id, &a.Name, &amount, &t.IsExpense, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
+			return nil, fmt.Errorf("fetch transactions row failed: %v", err)
+		}
+		// float64 -> bigFloat
+		t.Amount = big.NewFloat(amount)
+		t.Account = a
+
+		parsedCreatedAt, err := time.Parse(DATETIME_DB_LAYOUT, createdAt)
+
+		if err != nil {
+			return transactions, err
+		}
+
+		t.CreatedAt = parsedCreatedAt
+
+		if categoryId.Valid {
+			t.Category = &Category{Id: categoryId.Int64, Name: categoryName.String}
+		}
+
+		transactions = append(transactions, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during transactions iteration: %v", err)
+	}
+
+	return transactions, nil
+}
+
+func (d Database) Categories() ([]Category, error) {
+	// An albums slice to hold data from returned rows.
+	var categories []Category
+
+	rows, err := d.Handle.Query("select * from categories order by id asc")
+	if err != nil {
+		return nil, fmt.Errorf("fetch categories failed: %v", err)
+	}
+	defer rows.Close()
+
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for rows.Next() {
+		var c Category
+		if err := rows.Scan(&c.Id, &c.Name); err != nil {
+			return nil, fmt.Errorf("fetch categories row failed: %v", err)
+		}
+		categories = append(categories, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during categories iteration: %v", err)
+	}
+
+	return categories, nil
 }
