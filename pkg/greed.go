@@ -8,6 +8,7 @@ import (
 
 	"database/sql"
 
+	"github.com/labstack/gommon/log"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
@@ -41,7 +42,7 @@ func ConnectDb() (Database, error) {
 		return database, nil
 	}
 
-	fmt.Printf("DB %v connected\n", url)
+	log.Printf("DB %v connected\n", url)
 
 	database.Handle = db
 	return database, nil
@@ -61,7 +62,7 @@ type Transaction struct {
 	Account     Account
 	Amount      *big.Float
 	IsExpense   bool
-	Category    *Category // optional category
+	Category    Category
 	CreatedAt   time.Time
 	Description string
 }
@@ -70,36 +71,6 @@ type Category struct {
 	Id   int64
 	Name string
 }
-
-// need this to render the transactions with empty category
-func (c *Category) RenderId() int64 {
-	if c == nil {
-		return -1
-	}
-	return c.Id
-}
-
-func (c *Category) RenderName() string {
-	if c == nil {
-		return ""
-	}
-	return c.Name
-}
-
-// func (acc *Account) Update(name string, amount *big.Float, description string) {
-// 	acc.Name = name
-// 	acc.Amount = amount
-// 	acc.Description = description
-// }
-//
-// func (t *Transaction) Update(account Account, amount *big.Float, isExpense bool, category *Category, description string, createdAt time.Time) {
-// 	t.Account = account
-// 	t.Amount = amount
-// 	t.IsExpense = isExpense
-// 	t.Category = category
-// 	t.Description = description
-// 	t.CreatedAt = createdAt
-// }
 
 func (d Database) Accounts() ([]Account, error) {
 	// An albums slice to hold data from returned rows.
@@ -235,17 +206,17 @@ func (d Database) Transactions() ([]Transaction, error) {
 	for rows.Next() {
 		var t Transaction
 		var a Account
-		var categoryId sql.NullInt64
-		var categoryName sql.NullString
+		var c Category
 
 		var amount float64
 		var createdAt string
-		if err := rows.Scan(&t.Id, &a.Id, &a.Name, &amount, &t.IsExpense, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
+		if err := rows.Scan(&t.Id, &a.Id, &a.Name, &amount, &t.IsExpense, &c.Id, &c.Name, &createdAt, &t.Description); err != nil {
 			return nil, fmt.Errorf("fetch transactions row failed: %v", err)
 		}
 		// float64 -> bigFloat
 		t.Amount = big.NewFloat(amount)
 		t.Account = a
+		t.Category = c
 
 		parsedCreatedAt, err := time.Parse(DATETIME_DB_LAYOUT, createdAt)
 
@@ -254,10 +225,6 @@ func (d Database) Transactions() ([]Transaction, error) {
 		}
 
 		t.CreatedAt = parsedCreatedAt
-
-		if categoryId.Valid {
-			t.Category = &Category{Id: categoryId.Int64, Name: categoryName.String}
-		}
 
 		transactions = append(transactions, t)
 	}
@@ -313,7 +280,7 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 	t.CreatedAt = parsedCreatedAt
 
 	if categoryId.Valid {
-		t.Category = &Category{Id: categoryId.Int64, Name: categoryName.String}
+		t.Category = Category{Id: categoryId.Int64, Name: categoryName.String}
 	}
 
 	return t, nil
@@ -323,7 +290,7 @@ func (d Database) CreateTransaction(
 	account Account,
 	amount *big.Float,
 	isExpense bool,
-	category *Category,
+	category Category,
 	createdAt time.Time,
 	description string,
 ) (Transaction, error) {

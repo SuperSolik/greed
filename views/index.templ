@@ -48,6 +48,38 @@ templ Page(content templ.Component) {
 			function getTimeZone() {
 				return Intl.DateTimeFormat().resolvedOptions().timeZone
 			}
+
+			function formatDateToLocal(date) {
+				let d = typeof date === "string" ? new Date(date) : date;
+				return d.toLocaleString(
+					undefined,
+					{
+					  dateStyle: 'short',
+					  timeStyle: 'short',
+					}
+				)
+			}
+
+			function convertTz(date, tzString) {
+				return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {timeZone: tzString}));   
+			}
+
+			function getInputDate(date) {
+				return date.toISOString().split('T')[0];
+			}
+
+			function getInputTime(date){
+				// Specify options for time formatting
+				const options = {
+				  hour: '2-digit',
+				  minute: '2-digit',
+				  hour12: false  // Use 24-hour format
+				};
+
+				// Format the Date object as a time string
+				return date.toLocaleTimeString('en-US', options);
+			}
+
 		</script>
 	</html>
 }

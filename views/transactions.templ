@@ -6,28 +6,16 @@ import "time"
 import "supersolik/greed/pkg"
 
 templ DateTimePicker(timestamp time.Time) {
-	<div class="flex items-center">
-		<input class="h-full max-h-6" type="date" name="date" value={ timestamp.Format(greed.DATE_INPUT_LAYOUT) }/>
+	<!-- default type="datime-local" allows only to pick date -->
+	<div
+		_={ fmt.Sprintf(
+			"on load call convertTz(\"%v\") then put getInputDate(it) into #date.value then put getInputTime(it) into #time.value",
+			timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
+		class="flex items-center"
+	>
+		<input class="h-full max-h-6" id="date" type="date" name="date"/>
 		<span>&nbsp;</span>
-		<select class="appearance-none bg-transparent h-full" id="hours" name="hours">
-			for h := 0; h < 24; h++ {
-				if h == timestamp.Hour() {
-					<option selected value={ fmt.Sprintf("%02d", h) }>{ fmt.Sprintf("%02d", h) }</option>
-				} else {
-					<option value={ fmt.Sprintf("%02d", h) }>{ fmt.Sprintf("%02d", h) }</option>
-				}
-			}
-		</select>
-		<span class="h-full">:</span>
-		<select class="appearance-none bg-transparent h-full" id="minutes" name="minutes">
-			for m := 0; m < 60; m++ {
-				if m == timestamp.Minute() {
-					<option selected value={ fmt.Sprintf("%02d", m) }>{ fmt.Sprintf("%02d", m) }</option>
-				} else {
-					<option value={ fmt.Sprintf("%02d", m) }>{ fmt.Sprintf("%02d", m) }</option>
-				}
-			}
-		</select>
+		<input class="h-full max-h-6" id="time" type="time" name="time" min="00:00" max="23:59"/>
 		<!-- getting the user's timezone -->
 		<input
 			_="on load call getTimeZone() put it into me.value"
@@ -38,104 +26,109 @@ templ DateTimePicker(timestamp time.Time) {
 	</div>
 }
 
-templ Transaction(transaction greed.Transaction, accounts []greed.Account, categories []string, editMode bool) {
+templ Transaction(transaction greed.Transaction) {
 	<tr>
-		if !editMode {
-			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Category }</td>
-			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Account }</td>
-			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.CreatedAt.Format(greed.DATETIME_RENDER_LAYOUR) }</td>
-			<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
-			<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
-			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-get={ fmt.Sprintf("/transactions/%v?edit=true", transaction.Id) }
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					(edit*)
-				</button>
-			</td>
-		} else {
-			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
-					<span>*</span>
-					<select class="appearance-none bg-transparent w-full" id="category" name="category">
-						for _, c := range categories {
-							if c == transaction.Category {
-								<option value={ c } selected>{ c }</option>
-							} else {
-								<option value={ c }>{ c }</option>
-							}
-						}
-					</select>
-				</div>
-			</td>
-			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
-					<span>*</span>
-					<select class="appearance-none bg-transparent w-full" id="account" name="account">
-						for _, a := range accounts {
-							if a.Name == transaction.Account {
-								<option value={ a.Name } selected>{ a.Name }</option>
-							} else {
-								<option value={ a.Name }>{ a.Name }</option>
-							}
-						}
-					</select>
-				</div>
-			</td>
-			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
-					<span>*</span>
-					@DateTimePicker(transaction.CreatedAt)
-				</div>
-			</td>
-			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
-					<span>*</span>
-					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ transaction.Amount.String() }/>
-				</div>
-			</td>
-			<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="flex flex-row w-full">
-					<span>*</span>
-					<input class="w-full" name="description" type="text" placeholder="description" value={ transaction.Description }/>
-				</div>
-			</td>
-			<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
-				<div class="h-full flex">
-					<span>(</span>
-					<button
-						_="on mouseenter toggle .uppercase until mouseleave"
-						type="button"
-						hx-post={ fmt.Sprintf("/transactions/%v/save", transaction.Id) }
-						hx-target="closest tr"
-						hx-include="closest tr"
-						hx-swap="outerHTML"
-					>
-						save+
-					</button>
-					<span>|</span>
-					<button
-						class="h-full"
-						_="on mouseenter toggle .uppercase until mouseleave"
-						type="button"
-						hx-get={ fmt.Sprintf("/transactions/%v", transaction.Id) }
-						hx-target="closest tr"
-						hx-swap="outerHTML"
-					>
-						cancel-
-					</button>
-					<span>)</span>
-				</div>
-			</td>
-		}
+		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Category.Name }</td>
+		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Account.Name }</td>
+		<td
+			_={ fmt.Sprintf("on load call formatDateToLocal(\"%v\") put it into me", transaction.CreatedAt.Format(greed.DATETIME_DB_LAYOUT)) }
+			class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black"
+		></td>
+		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
+		<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
+		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+			<button
+				_="on mouseenter toggle .uppercase until mouseleave"
+				type="button"
+				hx-get={ fmt.Sprintf("/transactions/%v?edit=true", transaction.Id) }
+				hx-target="closest tr"
+				hx-swap="outerHTML"
+			>
+				(edit*)
+			</button>
+		</td>
 	</tr>
 }
 
-templ Transactions(transactions []greed.Transaction, accounts []greed.Account, categories []string) {
+templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, categories []greed.Category) {
+	<tr>
+		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full">
+				<span>*</span>
+				<select class="appearance-none bg-transparent w-full" id="category" name="category">
+					for _, c := range categories {
+						if c.Id == transaction.Category.Id {
+							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) } selected>{ c.Name }</option>
+						} else {
+							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) }>{ c.Name }</option>
+						}
+					}
+				</select>
+			</div>
+		</td>
+		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full">
+				<span>*</span>
+				<select class="appearance-none bg-transparent w-full" id="account" name="account">
+					for _, a := range accounts {
+						if a.Id == transaction.Account.Id {
+							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
+						} else {
+							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
+						}
+					}
+				</select>
+			</div>
+		</td>
+		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full">
+				<span>*</span>
+				@DateTimePicker(transaction.CreatedAt)
+			</div>
+		</td>
+		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full">
+				<span>*</span>
+				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ transaction.Amount.String() }/>
+			</div>
+		</td>
+		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full">
+				<span>*</span>
+				<input class="w-full" name="description" type="text" placeholder="description" value={ transaction.Description }/>
+			</div>
+		</td>
+		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+			<div class="h-full flex">
+				<span>(</span>
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-post={ fmt.Sprintf("/transactions/%v/save", transaction.Id) }
+					hx-target="closest tr"
+					hx-include="closest tr"
+					hx-swap="outerHTML"
+				>
+					save+
+				</button>
+				<span>|</span>
+				<button
+					class="h-full"
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/transactions/%v", transaction.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					cancel-
+				</button>
+				<span>)</span>
+			</div>
+		</td>
+	</tr>
+}
+
+templ Transactions(transactions []greed.Transaction) {
 	<div class="p-3">list Transactions[{ strconv.Itoa(len(transactions)) }]:</div>
 	<div class="px-3">
 		<table class="text-left max-w-screen-lg">
@@ -155,7 +148,7 @@ templ Transactions(transactions []greed.Transaction, accounts []greed.Account, c
 			</thead>
 			<tbody>
 				for _, t := range transactions {
-					@Transaction(t, accounts, categories, false)
+					@Transaction(t)
 				}
 			</tbody>
 		</table>
