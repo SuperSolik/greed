@@ -74,7 +74,7 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 						if a.Id == transaction.Account.Id {
 							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
 						} else {
-							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
+							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) }>{ a.Name }</option>
 						}
 					}
 				</select>
