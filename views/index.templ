@@ -1,5 +1,15 @@
 package views
 
+templ ReloadAnchor() {
+	<!-- this is just a sleeper agent to reload the current page upon loading, I use it to refresh the page after deletions/creations -->
+	<div
+		hidden
+		hx-trigger="load"
+		hx-get
+		hx-target="body"
+	></div>
+}
+
 templ Page(content templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en">

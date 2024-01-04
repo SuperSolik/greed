@@ -175,6 +175,32 @@ func (d Database) AccountById(id int64) (Account, error) {
 	return a, nil
 }
 
+func (d Database) DeleteAccount(accountId int64) error {
+	result, err := d.Handle.Exec(
+		`
+		delete from accounts
+		where accounts.id = ?
+		`,
+		accountId,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete account %v: %v", accountId, err)
+	}
+	rowsUpdated, err := result.RowsAffected()
+
+	if err != nil {
+		return fmt.Errorf("failed to get last inserted account id %v: %v", accountId, err)
+	}
+
+	switch {
+	case rowsUpdated == 0:
+		return fmt.Errorf("delete for account %v didn't affect any rows", accountId)
+	case rowsUpdated > 2:
+		return fmt.Errorf("account %v delete affected more than 1 row", accountId)
+	}
+	return nil
+}
+
 func (d Database) Transactions() ([]Transaction, error) {
 	// An albums slice to hold data from returned rows.
 	var transactions []Transaction
@@ -193,7 +219,8 @@ func (d Database) Transactions() ([]Transaction, error) {
 		from
 			transactions
 		join accounts on transactions.account_id = accounts.id
-		left join categories on transactions.category_id = categories.id;
+		left join categories on transactions.category_id = categories.id
+		order by datetime(transactions.created_at) desc;
 	`
 
 	rows, err := d.Handle.Query(query)
@@ -345,6 +372,32 @@ func (d Database) UpdateTransaction(transaction Transaction) (int64, error) {
 		return rowsUpdated, fmt.Errorf("transaction %v update affected more than 1 row", transaction)
 	}
 	return rowsUpdated, nil
+}
+
+func (d Database) DeleteTransaction(transactionId int64) error {
+	result, err := d.Handle.Exec(
+		`
+		delete from transactions
+		where transactions.id = ?
+		`,
+		transactionId,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete transaction %v: %v", transactionId, err)
+	}
+	rowsUpdated, err := result.RowsAffected()
+
+	if err != nil {
+		return fmt.Errorf("failed to get last inserted transaction id %v: %v", transactionId, err)
+	}
+
+	switch {
+	case rowsUpdated == 0:
+		return fmt.Errorf("delete for transaction %v didn't affect any rows", transactionId)
+	case rowsUpdated > 2:
+		return fmt.Errorf("transaction %v delete affected more than 1 row", transactionId)
+	}
+	return nil
 }
 
 func (d Database) Categories() ([]Category, error) {

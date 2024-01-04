@@ -23,6 +23,7 @@ func renderTempl(c echo.Context, t templ.Component) error {
 
 func main() {
 	db, err := greed.ConnectDb()
+
 	if err != nil {
 		log.Fatalf("Failed to connect to db: %v", greed.GetDbUrl())
 	}
@@ -46,24 +47,6 @@ func main() {
 		}
 
 		return nil
-	})
-
-	e.GET("/transactions", func(c echo.Context) error {
-		transactions, err := db.Transactions()
-
-		if err != nil {
-			return err
-		}
-
-		err = renderTempl(c, views.Page(
-			views.Transactions(transactions),
-		))
-
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "unable to render template")
-		}
-
-		return err
 	})
 
 	e.GET("/accounts/:id", func(c echo.Context) error {
@@ -102,7 +85,33 @@ func main() {
 		return nil
 	})
 
-	e.POST("/accounts/:id/save", func(c echo.Context) error {
+	e.POST("/accounts", func(c echo.Context) error {
+		accountName := c.FormValue("account_name")
+		currency := c.FormValue("currency")
+		description := c.FormValue("description")
+		parsedAmount, err := greed.ParseBigFloat(c.FormValue("amount"))
+
+		if err != nil {
+			return err
+		}
+
+		_, err = db.CreateAccount(accountName, parsedAmount, currency, description)
+
+		if err != nil {
+			return err
+		}
+
+		err = renderTempl(c, views.ReloadAnchor())
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+	})
+
+	e.PUT("/accounts/:id", func(c echo.Context) error {
 		accountId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 		if err != nil {
@@ -134,6 +143,47 @@ func main() {
 		}
 
 		return nil
+	})
+
+	e.DELETE("/accounts/:id", func(c echo.Context) error {
+		accountId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		err = db.DeleteAccount(accountId)
+
+		if err != nil {
+			return err
+		}
+
+		err = renderTempl(c, views.ReloadAnchor())
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+	})
+
+	e.GET("/transactions", func(c echo.Context) error {
+		transactions, err := db.Transactions()
+
+		if err != nil {
+			return err
+		}
+
+		err = renderTempl(c, views.Page(
+			views.Transactions(transactions),
+		))
+
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "unable to render template")
+		}
+
+		return err
 	})
 
 	e.GET("/transactions/:id", func(c echo.Context) error {
@@ -182,7 +232,29 @@ func main() {
 		return err
 	})
 
-	e.POST("/transactions/:id/save", func(c echo.Context) error {
+	e.DELETE("/transactions/:id", func(c echo.Context) error {
+		transactionId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+		if err != nil {
+			return err
+		}
+
+		err = db.DeleteTransaction(transactionId)
+
+		if err != nil {
+			return err
+		}
+
+		err = renderTempl(c, views.ReloadAnchor())
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	e.PUT("/transactions/:id", func(c echo.Context) error {
 		transactionId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 		if err != nil {
