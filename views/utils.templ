@@ -1,13 +1,10 @@
 package views
 
-templ ReloadAnchor() {
-	<!-- this is just a sleeper agent to reload the current page upon loading, I use it to refresh the page after deletions/creations -->
+templ RefreshAnchor() {
 	<div
 		hidden
-		hx-trigger="load"
-		hx-get
-		hx-target="body"
-	></div>
+		_="on load send refreshContent to window end"
+	>FUCK</div>
 }
 
 templ Page(content templ.Component) {
@@ -31,9 +28,7 @@ templ Page(content templ.Component) {
 						<nav>
 							<ul class="flex flex-row space-x-1.5">
 								<li>
-									<div>
-										|>
-									</div>
+									|>
 								</li>
 								<li>
 									<a

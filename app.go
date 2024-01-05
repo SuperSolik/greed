@@ -38,15 +38,19 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.Page(
+		return renderTempl(c, views.Page(
 			views.Accounts(accounts),
 		))
+	})
+
+	e.GET("/accounts/count", func(c echo.Context) error {
+		count, err := db.CountAccounts()
 
 		if err != nil {
 			return err
 		}
 
-		return nil
+		return c.String(http.StatusOK, strconv.FormatInt(count, 10))
 	})
 
 	e.GET("/accounts/:id", func(c echo.Context) error {
@@ -73,16 +77,10 @@ func main() {
 		}
 
 		if edit {
-			err = renderTempl(c, views.AccountEdit(account))
-		} else {
-			err = renderTempl(c, views.Account(account))
+			return renderTempl(c, views.AccountEdit(account))
 		}
 
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return renderTempl(c, views.Account(account))
 	})
 
 	e.POST("/accounts", func(c echo.Context) error {
@@ -101,14 +99,7 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.ReloadAnchor())
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-
+		return renderTempl(c, views.RefreshAnchor())
 	})
 
 	e.PUT("/accounts/:id", func(c echo.Context) error {
@@ -136,13 +127,7 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.Account(account))
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return renderTempl(c, views.Account(account))
 	})
 
 	e.DELETE("/accounts/:id", func(c echo.Context) error {
@@ -158,14 +143,7 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.ReloadAnchor())
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-
+		return renderTempl(c, views.RefreshAnchor())
 	})
 
 	e.GET("/transactions", func(c echo.Context) error {
@@ -175,15 +153,23 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.Page(
+		return renderTempl(c, views.Page(
 			views.Transactions(transactions),
 		))
+	})
+
+	e.GET("/transactions/count", func(c echo.Context) error {
+		count, err := db.CountTransactions()
 
 		if err != nil {
-			return c.String(http.StatusInternalServerError, "unable to render template")
+			return err
 		}
 
-		return err
+		return c.String(http.StatusOK, strconv.FormatInt(count, 10))
+	})
+
+	e.POST("/transactions", func(c echo.Context) error {
+		return renderTempl(c, views.RefreshAnchor())
 	})
 
 	e.GET("/transactions/:id", func(c echo.Context) error {
@@ -220,16 +206,23 @@ func main() {
 				return nil
 			}
 
-			err = renderTempl(c, views.TransactionEdit(transaction, accounts, categories))
-		} else {
-			err = renderTempl(c, views.Transaction(transaction))
+			return renderTempl(c, views.TransactionEdit(transaction, accounts, categories))
 		}
+		return renderTempl(c, views.Transaction(transaction))
+	})
 
+	e.GET("/transactions/new", func(c echo.Context) error {
+		accounts, err := db.Accounts()
 		if err != nil {
-			return c.String(http.StatusInternalServerError, "unable to render template")
+			return nil
 		}
 
-		return err
+		categories, err := db.Categories()
+		if err != nil {
+			return nil
+		}
+
+		return renderTempl(c, views.TransactionNew(accounts, categories))
 	})
 
 	e.DELETE("/transactions/:id", func(c echo.Context) error {
@@ -245,13 +238,7 @@ func main() {
 			return err
 		}
 
-		err = renderTempl(c, views.ReloadAnchor())
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return c.NoContent(http.StatusOK)
 	})
 
 	e.PUT("/transactions/:id", func(c echo.Context) error {

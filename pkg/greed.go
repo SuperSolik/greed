@@ -101,6 +101,18 @@ func (d Database) Accounts() ([]Account, error) {
 	return accounts, nil
 }
 
+func (d Database) CountAccounts() (int64, error) {
+	var count int64
+
+	row := d.Handle.QueryRow("select count(*) from accounts")
+
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (d Database) CreateAccount(
 	name string,
 	amount *big.Float,
@@ -263,6 +275,17 @@ func (d Database) Transactions() ([]Transaction, error) {
 	return transactions, nil
 }
 
+func (d Database) CountTransactions() (int64, error) {
+	var count int64
+
+	row := d.Handle.QueryRow("select count(*) from transactions")
+
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
 func (d Database) TransactionById(id int64) (Transaction, error) {
 	// An album to hold data from the returned row.
 	t := Transaction{Id: id}

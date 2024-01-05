@@ -1,8 +1,8 @@
 package views
 
-import "strconv"
 import "fmt"
 import "supersolik/greed/pkg"
+import "strconv"
 
 templ Account(account greed.Account) {
 	<tr>
@@ -11,15 +11,31 @@ templ Account(account greed.Account) {
 		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Amount.String() }</td>
 		<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ account.Description }</td>
 		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
-			<button
-				_="on mouseenter toggle .uppercase until mouseleave"
-				type="button"
-				hx-get={ fmt.Sprintf("/accounts/%v?edit=true", account.Id) }
-				hx-target="closest tr"
-				hx-swap="outerHTML"
-			>
-				(edit*)
-			</button>
+			<div class="flex">
+				<span>(</span>
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/accounts/%v?edit=true", account.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					edit*
+				</button>
+				<span>|</span>
+				<button
+					class="h-full"
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-confirm={ fmt.Sprintf("Delete \"%v\"?", account.Name) }
+					hx-delete={ fmt.Sprintf("/accounts/%v", account.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					delete
+				</button>
+				<span>)</span>
+			</div>
 		</td>
 	</tr>
 }
@@ -68,18 +84,6 @@ templ AccountEdit(account greed.Account) {
 				>
 					cancel
 				</button>
-				<span>|</span>
-				<button
-					class="h-full"
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-confirm={ fmt.Sprintf("Delete \"%v\"?", account.Name) }
-					hx-delete={ fmt.Sprintf("/accounts/%v", account.Id) }
-					hx-target="body"
-					hx-swap="afterbegin"
-				>
-					delete
-				</button>
 				<span>)</span>
 			</div>
 		</td>
@@ -124,8 +128,8 @@ templ AccountNew() {
 					type="button"
 					hx-post="/accounts"
 					hx-include="closest tr"
-					hx-target="body"
-					hx-swap="afterbegin"
+					hx-target="closest tr"
+					hx-swap="outerHTML"
 				>
 					create
 				</button>
@@ -143,9 +147,26 @@ templ AccountNew() {
 }
 
 templ Accounts(accounts []greed.Account) {
-	<div class="p-3">list Accounts[{ strconv.Itoa(len(accounts)) }]:</div>
-	<div class="px-3">
-		<table class="text-left max-w-screen-lg border-collapse">
+	<div
+		class="p-3 flex"
+	>
+		<span>list Accounts[</span>
+		<span
+			hx-get="/accounts/count"
+			hx-trigger="load, refreshContent from:window"
+			hx-swap="innerHTML"
+		>
+			{ strconv.Itoa(len(accounts)) }
+		</span>
+		<span>]</span>
+	</div>
+	<div
+		class="px-3"
+	>
+		<table
+			id="fucking-table"
+			class="text-left max-w-screen-lg border-collapse"
+		>
 			<thead>
 				<tr>
 					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Name</th>
@@ -159,7 +180,12 @@ templ Accounts(accounts []greed.Account) {
 					</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody
+				id="accounts-body"
+				hx-get
+				hx-select-oob="#accounts-body:outerHTML"
+				hx-trigger="refreshContent delay:0.1s from:window"
+			>
 				@AccountNew()
 				for _, account := range accounts {
 					@Account(account)

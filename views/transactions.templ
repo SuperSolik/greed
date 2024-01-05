@@ -1,9 +1,9 @@
 package views
 
-import "strconv"
 import "fmt"
 import "time"
 import "supersolik/greed/pkg"
+import "strconv"
 
 templ DateTimePicker(timestamp time.Time) {
 	<!-- default type="datime-local" allows only to pick date -->
@@ -130,8 +130,8 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 					type="button"
 					hx-confirm={ fmt.Sprintf("Delete \"%v (%v) - %v\"?", transaction.CreatedAt.Format(time.DateOnly), transaction.Category.Name, transaction.Amount.String()) }
 					hx-delete={ fmt.Sprintf("/transactions/%v", transaction.Id) }
-					hx-target="body"
-					hx-swap="afterbegin"
+					hx-target="closest tr"
+					hx-swap="outerHTML"
 				>
 					delete
 				</button>
@@ -141,8 +141,8 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 	</tr>
 }
 
-templ TransactionNew(transaction greed.Transaction, accounts []greed.Account, categories []greed.Category) {
-	<tr hidden id="new-transaction">
+templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
+	<tr id="new-transaction">
 		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full">
 				<span>*</span>
@@ -197,8 +197,8 @@ templ TransactionNew(transaction greed.Transaction, accounts []greed.Account, ca
 					type="button"
 					hx-post="/transactions"
 					hx-include="closest tr"
-					hx-target="body"
-					hx-swap="afterbegin"
+					hx-target="closest tr"
+					hx-swap="outerHTML"
 				>
 					create
 				</button>
@@ -216,7 +216,17 @@ templ TransactionNew(transaction greed.Transaction, accounts []greed.Account, ca
 }
 
 templ Transactions(transactions []greed.Transaction) {
-	<div class="p-3">list Transactions[{ strconv.Itoa(len(transactions)) }]:</div>
+	<div class="p-3 flex">
+		<span>list Transactions[</span>
+		<span
+			hx-get="/transactions/count"
+			hx-trigger="load,  from:#transactions-table throttle:1s"
+			hx-swap="innerHTML"
+		>
+			{ strconv.Itoa(len(transactions)) }
+		</span>
+		<span>]</span>
+	</div>
 	<div class="px-3">
 		<table class="text-left max-w-screen-lg">
 			<thead>
@@ -232,7 +242,7 @@ templ Transactions(transactions []greed.Transaction) {
 							type="button"
 							hx-trigger="click"
 							hx-get="/transactions/new"
-							hx-target="#transactions"
+							hx-target="#transactions-body"
 							hx-swap="afterbegin"
 						>
 							[new+]
@@ -240,7 +250,12 @@ templ Transactions(transactions []greed.Transaction) {
 					</th>
 				</tr>
 			</thead>
-			<tbody id="transactions-body">
+			<tbody
+				id="transactions-body"
+				hx-get
+				hx-select-oob="#transactions-body"
+				hx-trigger="refreshContent delay:0.1s from:window"
+			>
 				for _, t := range transactions {
 					@Transaction(t)
 				}
