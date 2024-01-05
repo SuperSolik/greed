@@ -169,6 +169,84 @@ func main() {
 	})
 
 	e.POST("/transactions", func(c echo.Context) error {
+		formValues, err := c.FormParams()
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("----transaction form start----")
+		for k, v := range formValues {
+			fmt.Printf("transaction form %v=%v\n", k, v)
+		}
+		fmt.Println("----transaction form end----")
+
+		// parse datetime
+		inputDate := c.FormValue("date")
+		inputTime := c.FormValue("time")
+
+		location, err := time.LoadLocation(c.FormValue("tz"))
+
+		if err != nil {
+			return nil
+		}
+
+		// Constructing the time layout
+		inputDateTime := fmt.Sprintf("%s %s", inputDate, inputTime)
+
+		// Parsing the input time string
+		createdAt, err := time.ParseInLocation(greed.DATETIME_INPUT_LAYOUT, inputDateTime, location)
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Parsed  time: %v\n", createdAt)
+
+		amount := c.FormValue("amount")
+		parsedAmount, _, err := big.ParseFloat(amount, 10, 53, big.ToNearestEven)
+
+		if err != nil {
+			return err
+		}
+
+		accountData := strings.Split(c.FormValue("account"), ";")
+		if len(accountData) != 2 {
+			log.Printf("[ERROR] failed to parse account data: %s", c.FormValue("account"))
+			return fmt.Errorf("Error during parsing  account data")
+		}
+
+		categoryData := strings.Split(c.FormValue("category"), ";")
+		if len(categoryData) != 2 {
+			log.Printf("Failed to parse category data: %s", c.FormValue("category"))
+			return fmt.Errorf("Error during parsing  category data")
+		}
+
+		accountId, err := strconv.ParseInt(accountData[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		categoryId, err := strconv.ParseInt(categoryData[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		description := c.FormValue("description")
+
+		_, err = db.CreateTransaction(
+			greed.Account{Id: accountId, Name: accountData[1]},
+			parsedAmount,
+			false,
+			greed.Category{Id: categoryId, Name: categoryData[1]},
+			createdAt,
+			description,
+		)
+
+		if err != nil {
+			return err
+		}
+
 		return renderTempl(c, views.RefreshAnchor())
 	})
 
@@ -238,7 +316,7 @@ func main() {
 			return err
 		}
 
-		return c.NoContent(http.StatusOK)
+		return renderTempl(c, views.RefreshAnchor())
 	})
 
 	e.PUT("/transactions/:id", func(c echo.Context) error {

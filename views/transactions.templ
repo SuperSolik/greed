@@ -31,21 +31,37 @@ templ Transaction(transaction greed.Transaction) {
 		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Category.Name }</td>
 		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Account.Name }</td>
 		<td
+			class="w-52 max-w-52 pr-3 py-2 font-normal border-b border-solid border-black"
 			_={ fmt.Sprintf("on load call formatDateToLocal(\"%v\") put it into me", transaction.CreatedAt.Format(greed.DATETIME_DB_LAYOUT)) }
-			class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black"
 		></td>
 		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
 		<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
 		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
-			<button
-				_="on mouseenter toggle .uppercase until mouseleave"
-				type="button"
-				hx-get={ fmt.Sprintf("/transactions/%v?edit=true", transaction.Id) }
-				hx-target="closest tr"
-				hx-swap="outerHTML"
-			>
-				(edit*)
-			</button>
+			<div class="flex">
+				<span>(</span>
+				<button
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-get={ fmt.Sprintf("/transactions/%v?edit=true", transaction.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					edit*
+				</button>
+				<span>|</span>
+				<button
+					class="h-full"
+					_="on mouseenter toggle .uppercase until mouseleave"
+					type="button"
+					hx-confirm={ fmt.Sprintf("Delete \"%v (%v) - %v\"?", transaction.CreatedAt.Format(time.DateOnly), transaction.Category.Name, transaction.Amount.String()) }
+					hx-delete={ fmt.Sprintf("/transactions/%v", transaction.Id) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>
+					delete
+				</button>
+				<span>)</span>
+			</div>
 		</td>
 	</tr>
 }
@@ -122,18 +138,6 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 					hx-swap="outerHTML"
 				>
 					cancel
-				</button>
-				<span>|</span>
-				<button
-					class="h-full"
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-confirm={ fmt.Sprintf("Delete \"%v (%v) - %v\"?", transaction.CreatedAt.Format(time.DateOnly), transaction.Category.Name, transaction.Amount.String()) }
-					hx-delete={ fmt.Sprintf("/transactions/%v", transaction.Id) }
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					delete
 				</button>
 				<span>)</span>
 			</div>
@@ -220,12 +224,12 @@ templ Transactions(transactions []greed.Transaction) {
 		<span>list Transactions[</span>
 		<span
 			hx-get="/transactions/count"
-			hx-trigger="load,  from:#transactions-table throttle:1s"
+			hx-trigger="load, refreshContent from:window"
 			hx-swap="innerHTML"
 		>
 			{ strconv.Itoa(len(transactions)) }
 		</span>
-		<span>]</span>
+		<span>]:</span>
 	</div>
 	<div class="px-3">
 		<table class="text-left max-w-screen-lg">
