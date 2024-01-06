@@ -6,3 +6,11 @@
 - [ ] transactions filtering by expense/income, datetime ranges, categories, accounts
 - [ ] main screen with stats
 - [ ] fix layout for mobile screen
+- [ ] roll out custom transaction div-based card like:
+
+```
+[Category]  amount  very long
+Account     date    description
+```
+
+
