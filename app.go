@@ -147,7 +147,7 @@ func main() {
 	})
 
 	e.GET("/transactions", func(c echo.Context) error {
-		transactions, err := db.Transactions()
+		transactions, err := db.Transactions(greed.TransactionFilterDefault())
 
 		if err != nil {
 			return err
@@ -403,5 +403,5 @@ func main() {
 
 		return renderTempl(c, views.Transaction(transaction))
 	})
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
 }

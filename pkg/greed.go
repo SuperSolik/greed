@@ -1,13 +1,13 @@
 package greed
 
 import (
+	"database/sql"
 	"fmt"
 	"math/big"
 	"os"
 	"time"
 
-	"database/sql"
-
+	sq "github.com/Masterminds/squirrel"
 	"github.com/labstack/gommon/log"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
@@ -213,29 +213,83 @@ func (d Database) DeleteAccount(accountId int64) error {
 	return nil
 }
 
-func (d Database) Transactions() ([]Transaction, error) {
+type TransactionFilter struct {
+	Page      uint64
+	PageSize  uint64
+	Search    string
+	DateStart time.Time
+	DateEnd   time.Time
+}
+
+func TransactionFilterDefault() TransactionFilter {
+	return TransactionFilter{
+		Page:     0,
+		PageSize: 5, // TODO: bump
+	}
+}
+
+func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) {
 	// An albums slice to hold data from returned rows.
+
+	query := sq.
+		Select(
+			"transactions.id as transaction_id",
+			"accounts.id as account_id",
+			"accounts.name as account_name",
+			"transactions.amount as amount",
+			"transactions.is_expense as is_expense",
+			"categories.id as category_id",
+			"categories.name as category_name",
+			"transactions.created_at as created_at",
+			"transactions.description as desription",
+		).
+		From("transactions").
+		Join("accounts ON transactions.account_id = accounts.id").
+		LeftJoin("categories on transactions.category_id = categories.id")
+
+	if filter.Search != "" {
+		likeTerm := fmt.Sprint("%", filter.Search, "%")
+		query = query.Where(sq.Or{
+			sq.Like{"account_name": likeTerm},
+			sq.Like{"description": likeTerm},
+			sq.Like{"category_name": likeTerm},
+		})
+	}
+
+	if !filter.DateStart.IsZero() {
+		query = query.Where(
+			sq.GtOrEq{
+				"datetime(transactions.created_at)": fmt.Sprintf("datetime('%s')", filter.DateStart.Format(DATETIME_DB_LAYOUT)),
+			},
+		)
+	}
+
+	if !filter.DateEnd.IsZero() {
+		// DateEnd is exclusive
+		query = query.Where(
+			sq.Lt{
+				"datetime(transactions.created_at)": fmt.Sprintf("datetime('%s')", filter.DateEnd.Format(DATETIME_DB_LAYOUT)),
+			},
+		)
+	}
+
+	query = query.OrderBy("datetime(transactions.created_at) desc")
+
+	if filter.PageSize > 0 {
+		query = query.Limit(filter.PageSize).Offset(filter.Page * filter.PageSize)
+	}
+
+	sql, args, err := query.ToSql()
+
+	log.Printf("Transactions query: %v", sql)
+
+	if err != nil {
+		return nil, err
+	}
+
 	var transactions []Transaction
 
-	query := `
-		select
-			transactions.id as transaction_id,
-			accounts.id as account_id,
-			accounts.name as account_name,
-			transactions.amount,
-			transactions.is_expense,
-			categories.id as category_id,
-			categories.name as category_name,
-			transactions.created_at,
-			transactions.description
-		from
-			transactions
-		join accounts on transactions.account_id = accounts.id
-		left join categories on transactions.category_id = categories.id
-		order by datetime(transactions.created_at) desc;
-	`
-
-	rows, err := d.Handle.Query(query)
+	rows, err := d.Handle.Query(sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetch transactions failed: %v", err)
 	}

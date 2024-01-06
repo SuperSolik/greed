@@ -67,7 +67,7 @@ func test_db() {
 
 	fmt.Println("---transactions---")
 
-	transactions, err := db.Transactions()
+	transactions, err := db.Transactions(greed.TransactionFilterDefault())
 
 	if err != nil {
 		fmt.Println(err)
