@@ -229,8 +229,6 @@ func TransactionFilterDefault() TransactionFilter {
 }
 
 func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) {
-	// An albums slice to hold data from returned rows.
-
 	query := sq.
 		Select(
 			"transactions.id as transaction_id",
@@ -259,7 +257,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 	if !filter.DateStart.IsZero() {
 		query = query.Where(
 			sq.GtOrEq{
-				"datetime(transactions.created_at)": fmt.Sprintf("datetime('%s')", filter.DateStart.Format(DATETIME_DB_LAYOUT)),
+				"datetime(transactions.created_at)": filter.DateStart.UTC(),
 			},
 		)
 	}
@@ -268,7 +266,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 		// DateEnd is exclusive
 		query = query.Where(
 			sq.Lt{
-				"datetime(transactions.created_at)": fmt.Sprintf("datetime('%s')", filter.DateEnd.Format(DATETIME_DB_LAYOUT)),
+				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
 			},
 		)
 	}
@@ -294,7 +292,6 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 		return nil, fmt.Errorf("fetch transactions failed: %v", err)
 	}
 	defer rows.Close()
-
 	// Loop through rows, using Scan to assign column data to struct fields.
 	for rows.Next() {
 		var t Transaction
@@ -321,7 +318,6 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 
 		transactions = append(transactions, t)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error during transactions iteration: %v", err)
 	}
