@@ -37,15 +37,15 @@ VALUES
 
 INSERT INTO categories (name)
 VALUES
-    ('🗑️ - Other'),
-    ('💰 - Finance'),
-    ('🍖 - Food and Drinks'),
-    ('🍱 - Restaurants'),
-    ('🏠 - Rent and Housing'),
-    ('🎮 - Entertainment'),
-    ('🧭 - Traveling'),
-    ('🧾 - Bills and Taxes'),
-    ('💆 - Beauty and Health');
+    ('🗑️ Other'),
+    ('💰 Finance'),
+    ('🍖 Food and drinks'),
+    ('🍱 Eating out'),
+    ('🏠 Rent and Housing'),
+    ('🎮 Fun'),
+    ('🧭 Travel'),
+    ('🧾 Bills and Taxes'),
+    ('💆 Beauty and Health');
 
 INSERT INTO transactions (account_id, amount, is_expense, category_id, created_at, description)
 VALUES

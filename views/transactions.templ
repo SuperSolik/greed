@@ -28,15 +28,15 @@ templ DateTimePicker(timestamp time.Time) {
 
 templ Transaction(transaction greed.Transaction) {
 	<tr>
-		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Category.Name }</td>
-		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Account.Name }</td>
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Category.Name }</td>
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Account.Name }</td>
 		<td
-			class="w-52 max-w-52 pr-3 py-2 font-normal border-b border-solid border-black"
+			class="w-52 max-w-52 pr-2 py-2 font-normal border-b border-solid border-black"
 			_={ fmt.Sprintf("on load call formatDateToLocal(\"%v\") put it into me", transaction.CreatedAt.Format(greed.DATETIME_DB_LAYOUT)) }
 		></td>
-		<td class="max-w-48 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
-		<td class="max-w-80 pr-3 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
-		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Amount.String() }</td>
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Description }</td>
+		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex">
 				<span>(</span>
 				<button
@@ -46,7 +46,7 @@ templ Transaction(transaction greed.Transaction) {
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>
-					edit*
+					*edit
 				</button>
 				<span>|</span>
 				<button
@@ -58,7 +58,7 @@ templ Transaction(transaction greed.Transaction) {
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>
-					delete
+					~delete
 				</button>
 				<span>)</span>
 			</div>
@@ -68,10 +68,10 @@ templ Transaction(transaction greed.Transaction) {
 
 templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, categories []greed.Category) {
 	<tr>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
-				<select class="appearance-none bg-transparent w-full" id="category" name="category">
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
+				<select class="truncate appearance-none bg-transparent w-full" id="category" name="category">
 					for _, c := range categories {
 						if c.Id == transaction.Category.Id {
 							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) } selected>{ c.Name }</option>
@@ -82,10 +82,10 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 				</select>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
-				<select class="appearance-none bg-transparent w-full" id="account" name="account">
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
+				<select class="truncate appearance-none bg-transparent w-full" id="account" name="account">
 					for _, a := range accounts {
 						if a.Id == transaction.Account.Id {
 							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
@@ -96,25 +96,25 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 				</select>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				@DateTimePicker(transaction.CreatedAt)
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ transaction.Amount.String() }/>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				<input class="w-full" name="description" type="text" placeholder="description" value={ transaction.Description }/>
 			</div>
 		</td>
-		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="h-full flex">
 				<span>(</span>
 				<!-- TODO: transaction date update doesn't affect the order, needs a page refresh -->
@@ -126,7 +126,7 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 					hx-include="closest tr"
 					hx-swap="outerHTML"
 				>
-					save
+					+save
 				</button>
 				<span>|</span>
 				<button
@@ -137,7 +137,7 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>
-					cancel
+					-cancel
 				</button>
 				<span>)</span>
 			</div>
@@ -147,10 +147,10 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 
 templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
 	<tr id="new-transaction">
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
-				<select class="appearance-none bg-transparent w-full" id="category" name="category">
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full itemes-center">
+				@EditIndicator()
+				<select class="truncate appearance-none bg-transparent w-full" id="category" name="category">
 					for i, c := range categories {
 						if i == 0 {
 							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) } selected>{ c.Name }</option>
@@ -161,10 +161,10 @@ templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
 				</select>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
-				<select class="appearance-none bg-transparent w-full" id="account" name="account">
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
+				<select class="truncate appearance-none bg-transparent w-full" id="account" name="account">
 					for i, a := range accounts {
 						if i == 0 {
 							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
@@ -175,25 +175,25 @@ templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
 				</select>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				@DateTimePicker(time.Now().UTC())
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value="0.0"/>
 			</div>
 		</td>
-		<td class="pr-3 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full">
-				<span>*</span>
+		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
+			<div class="flex flex-row w-full items-center">
+				@EditIndicator()
 				<input class="w-full" name="description" type="text" placeholder="description" value=""/>
 			</div>
 		</td>
-		<td class="max-w-52 pr-3 py-2 font-normal border-b border-solid border-black">
+		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="h-full flex">
 				<span>(</span>
 				<button
@@ -204,14 +204,14 @@ templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>
-					create
+					+create
 				</button>
 				<span>|</span>
 				<button
 					_="on mouseenter toggle .uppercase until mouseleave end on click remove #new-transaction end"
 					type="button"
 				>
-					cancel
+					-cancel
 				</button>
 				<span>)</span>
 			</div>
@@ -235,12 +235,12 @@ templ Transactions(transactions []greed.Transaction) {
 		<table class="text-left max-w-screen-lg">
 			<thead>
 				<tr>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Category</th>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Account</th>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">When</th>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Amount</th>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">Description</th>
-					<th class="font-normal tracking-wider pr-3 py-2 border-b border-solid border-black">
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Category</th>
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Account</th>
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">When</th>
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Amount</th>
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Description</th>
+					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">
 						<button
 							_="on mouseenter toggle .uppercase until mouseleave end"
 							type="button"

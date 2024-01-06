@@ -1,5 +1,9 @@
 package views
 
+templ EditIndicator() {
+	<span class="text-sm">*</span>
+}
+
 templ RefreshAnchor() {
 	<div
 		hidden
@@ -18,7 +22,7 @@ templ Page(content templ.Component) {
 			<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
 		</head>
-		<body class="font-mono font-normal">
+		<body class="font-mono font-normal text-base">
 			<header>
 				<div class="flex flex-row p-3 ">
 					<div class="mr-3">

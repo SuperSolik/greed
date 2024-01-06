@@ -403,5 +403,5 @@ func main() {
 
 		return renderTempl(c, views.Transaction(transaction))
 	})
-	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
