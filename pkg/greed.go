@@ -268,7 +268,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 			"categories.id as category_id",
 			"categories.name as category_name",
 			"transactions.created_at as created_at",
-			"transactions.description as desription",
+			"transactions.description as transaction_description",
 		).
 		From("transactions").
 		Join("accounts ON transactions.account_id = accounts.id").
@@ -278,7 +278,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 		likeTerm := fmt.Sprint("%", filter.Search, "%")
 		query = query.Where(sq.Or{
 			sq.Like{"account_name": likeTerm},
-			sq.Like{"description": likeTerm},
+			sq.Like{"transaction_description": likeTerm},
 			sq.Like{"category_name": likeTerm},
 		})
 	}

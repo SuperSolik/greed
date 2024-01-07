@@ -183,6 +183,23 @@ templ Transactions(transactions []greed.Transaction, filter greed.TransactionFil
 	}
 }
 
+templ FilterForm() {
+	<div id="filter-params" hx-params class="p-3 flex">
+		<div class="flex flex-row items-center">
+			<label for="search">~q:</label>
+			<input
+				hx-get="/transactions/content"
+				hx-trigger="input changed delay:500ms, search"
+				hx-target="#transactions-body"
+				type="search"
+				name="search"
+				placeholder="type to search..."
+				value=""
+			/>
+		</div>
+	</div>
+}
+
 templ TransactionsData(transactions []greed.Transaction, filter greed.TransactionFilter) {
 	<div class="p-3 flex">
 		<span>list Transactions[</span>
@@ -195,6 +212,7 @@ templ TransactionsData(transactions []greed.Transaction, filter greed.Transactio
 		</span>
 		<span>]:</span>
 	</div>
+	@FilterForm()
 	<div class="px-3">
 		<table class="text-left max-w-screen-lg">
 			<thead>
@@ -221,7 +239,8 @@ templ TransactionsData(transactions []greed.Transaction, filter greed.Transactio
 			<tbody
 				id="transactions-body"
 				hx-get="/transactions/content"
-				hx-swap="innerHTML"
+				hx-include="#filter-params"
+				hx-params
 				hx-trigger="refreshContent delay:0.1s from:window"
 			>
 				@Transactions(transactions, filter)

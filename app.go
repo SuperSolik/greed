@@ -179,8 +179,14 @@ func main() {
 			pageSize = greed.DefaultPageSize
 		}
 
+		search := c.QueryParam("search")
+
 		filter.Page = page
 		filter.PageSize = pageSize
+
+		if search != "" {
+			filter.Search = search
+		}
 
 		transactions, err := db.Transactions(filter)
 
