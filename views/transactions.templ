@@ -26,8 +26,10 @@ templ DateTimePicker(timestamp time.Time) {
 	</div>
 }
 
-templ Transaction(transaction greed.Transaction) {
-	<tr>
+templ Transaction(transaction greed.Transaction, attrs templ.Attributes) {
+	<tr
+		{ attrs... }
+	>
 		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Category.Name }</td>
 		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">{ transaction.Account.Name }</td>
 		<td
@@ -66,7 +68,7 @@ templ Transaction(transaction greed.Transaction) {
 	</tr>
 }
 
-templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, categories []greed.Category) {
+templ TransactionForm(transaction greed.Transaction, accounts []greed.Account, categories []greed.Category, create bool) {
 	<tr>
 		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
@@ -117,114 +119,76 @@ templ TransactionEdit(transaction greed.Transaction, accounts []greed.Account, c
 		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="h-full flex">
 				<span>(</span>
-				<!-- TODO: transaction date update doesn't affect the order, needs a page refresh -->
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-put={ fmt.Sprintf("/transactions/%v", transaction.Id) }
-					hx-target="closest tr"
-					hx-include="closest tr"
-					hx-swap="outerHTML"
-				>
-					+save
-				</button>
-				<span>|</span>
-				<button
-					class="h-full"
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-get={ fmt.Sprintf("/transactions/%v", transaction.Id) }
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					-cancel
-				</button>
+				if create {
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-post="/transactions"
+						hx-include="closest tr"
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+					>
+						+create
+					</button>
+					<span>|</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave end on click remove closest <tr/> end"
+						type="button"
+					>
+						-cancel
+					</button>
+				} else {
+					<!-- TODO: transaction date update doesn't affect the order, needs a page refresh -->
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-put={ fmt.Sprintf("/transactions/%v", transaction.Id) }
+						hx-target="closest tr"
+						hx-include="closest tr"
+						hx-swap="outerHTML"
+					>
+						+save
+					</button>
+					<span>|</span>
+					<button
+						class="h-full"
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-get={ fmt.Sprintf("/transactions/%v", transaction.Id) }
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+					>
+						-cancel
+					</button>
+				}
 				<span>)</span>
 			</div>
 		</td>
 	</tr>
 }
 
-templ TransactionNew(accounts []greed.Account, categories []greed.Category) {
-	<tr id="new-transaction">
-		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full itemes-center">
-				@EditIndicator()
-				<select class="truncate appearance-none bg-transparent w-full" id="category" name="category">
-					for i, c := range categories {
-						if i == 0 {
-							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) } selected>{ c.Name }</option>
-						} else {
-							<option value={ fmt.Sprintf("%v;%v", c.Id, c.Name) }>{ c.Name }</option>
-						}
-					}
-				</select>
-			</div>
-		</td>
-		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<select class="truncate appearance-none bg-transparent w-full" id="account" name="account">
-					for i, a := range accounts {
-						if i == 0 {
-							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) } selected>{ a.Name }</option>
-						} else {
-							<option value={ fmt.Sprintf("%v;%v", a.Id, a.Name) }>{ a.Name }</option>
-						}
-					}
-				</select>
-			</div>
-		</td>
-		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				@DateTimePicker(time.Now().UTC())
-			</div>
-		</td>
-		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value="0.0"/>
-			</div>
-		</td>
-		<td class="max-w-48 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<input class="w-full" name="description" type="text" placeholder="description" value=""/>
-			</div>
-		</td>
-		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="h-full flex">
-				<span>(</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-post="/transactions"
-					hx-include="closest tr"
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					+create
-				</button>
-				<span>|</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave end on click remove #new-transaction end"
-					type="button"
-				>
-					-cancel
-				</button>
-				<span>)</span>
-			</div>
-		</td>
-	</tr>
+templ Transactions(transactions []greed.Transaction, filter greed.TransactionFilter) {
+	for i, t := range transactions {
+		if i == len(transactions) - 1 {
+			@Transaction(t, 
+				templ.Attributes{
+					"hx-trigger": "revealed", 
+					"hx-get": fmt.Sprintf("/transactions/content%v", filter.NextPage().BuildQueryParams()), 
+					"hx-swap": "afterend",
+				},
+			)
+		} else {
+			@Transaction(t, templ.Attributes{})
+		}
+	}
 }
 
-templ Transactions(transactions []greed.Transaction) {
+templ TransactionsData(transactions []greed.Transaction, filter greed.TransactionFilter) {
 	<div class="p-3 flex">
 		<span>list Transactions[</span>
 		<span
 			hx-get="/transactions/count"
-			hx-trigger="load, refreshContent from:window"
+			hx-trigger="load, refreshContent from:window, recountItems from:window"
 			hx-swap="innerHTML"
 		>
 			{ strconv.Itoa(len(transactions)) }
@@ -256,13 +220,11 @@ templ Transactions(transactions []greed.Transaction) {
 			</thead>
 			<tbody
 				id="transactions-body"
-				hx-get
-				hx-select-oob="#transactions-body"
+				hx-get="/transactions/content"
+				hx-swap="innerHTML"
 				hx-trigger="refreshContent delay:0.1s from:window"
 			>
-				for _, t := range transactions {
-					@Transaction(t)
-				}
+				@Transactions(transactions, filter)
 			</tbody>
 		</table>
 	</div>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -221,11 +222,39 @@ type TransactionFilter struct {
 	DateEnd   time.Time
 }
 
+const DefaultPageSize uint64 = 20
+
+func (f TransactionFilter) NextPage() TransactionFilter {
+	f.Page += 1
+	return f
+}
+
 func TransactionFilterDefault() TransactionFilter {
 	return TransactionFilter{
 		Page:     0,
-		PageSize: 5, // TODO: bump
+		PageSize: DefaultPageSize, // TODO: bump
 	}
+}
+
+func (f TransactionFilter) BuildQueryParams() string {
+	var params []string
+
+	params = append(params, fmt.Sprintf("page=%d", f.Page))
+	params = append(params, fmt.Sprintf("size=%d", f.PageSize))
+
+	if f.Search != "" {
+		params = append(params, fmt.Sprintf("search=%s", f.Search))
+	}
+
+	if !f.DateStart.IsZero() {
+		params = append(params, fmt.Sprintf("date_start=%s", f.DateStart.UTC().Format(time.DateOnly)))
+	}
+
+	if !f.DateEnd.IsZero() {
+		params = append(params, fmt.Sprintf("date_end=%s", f.DateEnd.UTC().Format(time.DateOnly)))
+	}
+
+	return "?" + strings.Join(params, "&")
 }
 
 func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) {

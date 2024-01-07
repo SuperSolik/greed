@@ -143,18 +143,65 @@ func main() {
 			return err
 		}
 
-		return renderTempl(c, views.RefreshAnchor())
+		return renderTempl(c, views.RecountAnchor())
+	})
+
+	e.GET("/transactions/content", func(c echo.Context) error {
+		var filter greed.TransactionFilter
+
+		// parse page
+		var page uint64
+
+		pageParam := c.QueryParam("page")
+
+		if pageParam != "" {
+			page, err = strconv.ParseUint(pageParam, 10, 64)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			page = 0
+		}
+
+		var pageSize uint64
+
+		// parse page size
+		pageSizeParam := c.QueryParam("size")
+
+		if pageSizeParam != "" {
+			pageSize, err = strconv.ParseUint(pageSizeParam, 10, 64)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			pageSize = greed.DefaultPageSize
+		}
+
+		filter.Page = page
+		filter.PageSize = pageSize
+
+		transactions, err := db.Transactions(filter)
+
+		if err != nil {
+			return err
+		}
+
+		return renderTempl(c, views.Transactions(transactions, filter))
 	})
 
 	e.GET("/transactions", func(c echo.Context) error {
-		transactions, err := db.Transactions(greed.TransactionFilterDefault())
+		initFilter := greed.TransactionFilterDefault()
+
+		transactions, err := db.Transactions(initFilter)
 
 		if err != nil {
 			return err
 		}
 
 		return renderTempl(c, views.Page(
-			views.Transactions(transactions),
+			views.TransactionsData(transactions, initFilter),
 		))
 	})
 
@@ -284,9 +331,9 @@ func main() {
 				return nil
 			}
 
-			return renderTempl(c, views.TransactionEdit(transaction, accounts, categories))
+			return renderTempl(c, views.TransactionForm(transaction, accounts, categories, false))
 		}
-		return renderTempl(c, views.Transaction(transaction))
+		return renderTempl(c, views.Transaction(transaction, templ.Attributes{}))
 	})
 
 	e.GET("/transactions/new", func(c echo.Context) error {
@@ -300,7 +347,14 @@ func main() {
 			return nil
 		}
 
-		return renderTempl(c, views.TransactionNew(accounts, categories))
+		t := greed.Transaction{
+			Category:  categories[0],
+			Account:   accounts[0],
+			Amount:    big.NewFloat(0.0),
+			CreatedAt: time.Now().UTC(),
+		}
+
+		return renderTempl(c, views.TransactionForm(t, accounts, categories, true))
 	})
 
 	e.DELETE("/transactions/:id", func(c echo.Context) error {
@@ -316,7 +370,7 @@ func main() {
 			return err
 		}
 
-		return renderTempl(c, views.RefreshAnchor())
+		return renderTempl(c, views.RecountAnchor())
 	})
 
 	e.PUT("/transactions/:id", func(c echo.Context) error {
@@ -401,7 +455,7 @@ func main() {
 
 		db.UpdateTransaction(transaction)
 
-		return renderTempl(c, views.Transaction(transaction))
+		return renderTempl(c, views.Transaction(transaction, templ.Attributes{}))
 	})
 	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
 }

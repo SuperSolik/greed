@@ -4,10 +4,17 @@ templ EditIndicator() {
 	<span class="text-sm">*</span>
 }
 
+templ RecountAnchor() {
+	<div
+		hidden
+		_="on load send recountItems to window then remove me end"
+	>SHIT</div>
+}
+
 templ RefreshAnchor() {
 	<div
 		hidden
-		_="on load send refreshContent to window end"
+		_="on load send refreshContent to window then remove me end"
 	>FUCK</div>
 }
 
