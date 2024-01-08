@@ -474,15 +474,15 @@ func main() {
 			return renderTempl(c, views.DateRangeInput(now, now, true, false, true))
 		case greed.Last7Days:
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -6), now, true, false, true))
-		case greed.LastWeek:
+		case greed.ThisWeek:
 			diff := [7]int{6, 0, 1, 2, 3, 4, 5}
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -diff[now.Weekday()]), now, true, false, true))
 		case greed.Last30Days:
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -29), now, true, false, true))
-		case greed.LastMonth:
+		case greed.ThisMonth:
 			startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 			return renderTempl(c, views.DateRangeInput(startOfMonth, now, true, false, true))
-		case greed.LastYear:
+		case greed.ThisYear:
 			startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
 			return renderTempl(c, views.DateRangeInput(startOfYear, now, true, false, true))
 		case greed.Custom:

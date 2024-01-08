@@ -9,10 +9,10 @@ const DATETIME_INPUT_LAYOUT = "2006-01-02 15:04"
 const (
 	None       string = "none"
 	Today      string = "today"
+	ThisWeek   string = "this_week"
+	ThisMonth  string = "this_month"
+	ThisYear   string = "this_year"
 	Last7Days  string = "last_7_days"
-	LastWeek   string = "last_week"
 	Last30Days string = "last_30_days"
-	LastMonth  string = "last_month"
-	LastYear   string = "last_year"
 	Custom     string = "custom"
 )
