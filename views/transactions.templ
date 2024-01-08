@@ -5,24 +5,51 @@ import "time"
 import "supersolik/greed/pkg"
 import "strconv"
 
-templ DateTimePicker(timestamp time.Time) {
+templ DateTimePicker(timestamp time.Time, dateOnly, clientLocal bool, disabled bool) {
 	<!-- default type="datime-local" allows only to pick date -->
 	<div
-		_={ fmt.Sprintf(
-			"on load call convertTz(\"%v\") then put getInputDate(it) into #date.value then put getInputTime(it) into #time.value",
-			timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
 		class="flex items-center"
 	>
-		<input class="h-full max-h-6" id="date" type="date" name="date"/>
-		<span>&nbsp;</span>
-		<input class="h-full max-h-6" id="time" type="time" name="time" min="00:00" max="23:59"/>
-		<!-- getting the user's timezone -->
 		<input
-			_="on load call getTimeZone() put it into me.value"
-			type="hidden"
-			name="tz"
-			value=""
+			if clientLocal {
+				_={ fmt.Sprintf(
+					"on load call convertTz(\"%v\") then put getInputDate(it) into me.value",
+					timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
+			}
+			disabled?={ disabled }
+			class="h-full max-h-6"
+			id="date"
+			type="date"
+			name="date"
+			value={ timestamp.Format(time.DateOnly) }
 		/>
+		if !dateOnly {
+			<span>&nbsp;</span>
+			<input
+				if clientLocal {
+					_={ fmt.Sprintf(
+				"on load call convertTz(\"%v\") then put getInputTime(it) into me.value",
+				timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
+				}
+				disabled?={ disabled }
+				class="h-full max-h-6"
+				id="time"
+				type="time"
+				name="time"
+				min="00:00"
+				max="23:59"
+				value={ timestamp.Format(greed.TIME_INPUT_LAYOUT) }
+			/>
+			if clientLocal {
+				<!-- getting the user's timezone -->
+				<input
+					_="on load call getTimeZone() put it into me.value"
+					type="hidden"
+					name="tz"
+					value=""
+				/>
+			}
+		}
 	</div>
 }
 
@@ -101,7 +128,7 @@ templ TransactionForm(transaction greed.Transaction, accounts []greed.Account, c
 		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
-				@DateTimePicker(transaction.CreatedAt)
+				@DateTimePicker(transaction.CreatedAt, false, true, false)
 			</div>
 		</td>
 		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
@@ -185,8 +212,21 @@ templ Transactions(transactions []greed.Transaction, filter greed.TransactionFil
 	}
 }
 
+templ DateRangeInput(dateStart, dateEnd time.Time, dateOnly, clientLocal, disabled bool) {
+	<div class="flex flex-row space-x-2">
+		<div class="flex flex-row">
+			<span>~from:</span>
+			@DateTimePicker(dateStart, dateOnly, clientLocal, disabled)
+		</div>
+		<div class="flex flex-row">
+			<span>~to:</span>
+			@DateTimePicker(dateEnd,  dateOnly ,clientLocal, disabled)
+		</div>
+	</div>
+}
+
 templ FilterForm() {
-	<div id="filter-params" hx-params class="p-3 flex">
+	<div id="filter-params" hx-params class="p-3 space-y-4">
 		<div class="flex flex-row items-center">
 			<label for="search">~q:</label>
 			<input
@@ -198,6 +238,46 @@ templ FilterForm() {
 				placeholder="type to search..."
 				value=""
 			/>
+		</div>
+		<div
+			class="flex flex-row items-center space-x-2"
+		>
+			<div
+				class="flex flex-row items-center"
+			>
+				<label for="selected_date_range">~d:</label>
+				<select
+					_="
+				on load 
+					add .text-gray-400 to me
+				end
+				on change
+				if me.value == 'placeholder'
+					add .text-gray-400 to me
+				else
+					remove .text-gray-400 from me
+				end
+				"
+					hx-trigger="change"
+					hx-get="/daterange/input"
+					hx-target="#date-range-filter"
+					hx-swap="innerHTML"
+					hx-params
+					class="appearance-none"
+					name="date_range_type"
+				>
+					<option disabled selected value="placeholder">date filter...</option>
+					<option value={ greed.None }>-</option>
+					<option value={ greed.Today }>today</option>
+					<option value={ greed.LastWeek }>last week</option>
+					<option value={ greed.Last7Days }>last 7d</option>
+					<option value={ greed.LastMonth }>last month</option>
+					<option value={ greed.Last30Days }>last 30d</option>
+					<option value={ greed.LastYear }>last year</option>
+					<option value={ greed.Custom }>custom</option>
+				</select>
+			</div>
+			<div id="date-range-filter"></div>
 		</div>
 	</div>
 }
