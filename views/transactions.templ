@@ -216,9 +216,7 @@ templ TransactionForm(transaction greed.Transaction, accounts []greed.Account, c
 
 templ Transactions(transactions []greed.Transaction, filter greed.TransactionFilter) {
 	for i, t := range transactions {
-		if i == len(transactions) - 1 {
-			// TODO: optimize, don't put next page fetch 
-			//       if the len of current page is less than page size (meaning, for sure we don't have anything more) 
+		if i == len(transactions) - 1 && len(transactions) == int(filter.PageSize) {
 			@Transaction(t, 
 				templ.Attributes{
 					"hx-trigger": "revealed", 
