@@ -32,7 +32,7 @@ func main() {
 	e.Use(middleware.Logger())
 
 	e.GET("/", func(c echo.Context) error {
-		accounts, err := db.Accounts()
+		accounts, err := greed.GetAccounts(db)
 
 		if err != nil {
 			return err
@@ -44,7 +44,7 @@ func main() {
 	})
 
 	e.GET("/accounts/count", func(c echo.Context) error {
-		count, err := db.CountAccounts()
+		count, err := greed.CountAccounts(db)
 
 		if err != nil {
 			return err
@@ -70,7 +70,7 @@ func main() {
 			edit = false
 		}
 
-		account, err := db.AccountById(accountId)
+		account, err := greed.GetAccountById(db, accountId)
 
 		if err != nil {
 			return err
@@ -93,7 +93,7 @@ func main() {
 			return err
 		}
 
-		_, err = db.CreateAccount(accountName, parsedAmount, currency, description)
+		_, err = greed.CreateAccount(db, accountName, parsedAmount, currency, description)
 
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func main() {
 			return err
 		}
 
-		account, err := db.AccountById(accountId)
+		account, err := greed.GetAccountById(db, accountId)
 
 		parsedAmount, err := greed.ParseBigFloat(c.FormValue("amount"))
 
@@ -121,7 +121,7 @@ func main() {
 		account.Amount = parsedAmount
 		account.Description = c.FormValue("description")
 
-		_, err = db.UpdateAccount(account)
+		_, err = greed.UpdateAccount(db, account)
 
 		if err != nil {
 			return err
@@ -137,7 +137,7 @@ func main() {
 			return err
 		}
 
-		err = db.DeleteAccount(accountId)
+		err = greed.DeleteAccount(db, accountId)
 
 		if err != nil {
 			return err
@@ -202,7 +202,7 @@ func main() {
 			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
 		}
 
-		transactions, err := db.Transactions(filter)
+		transactions, err := greed.GetTransactions(db, filter)
 
 		if err != nil {
 			return err
@@ -214,7 +214,7 @@ func main() {
 	e.GET("/transactions", func(c echo.Context) error {
 		initFilter := greed.TransactionFilterDefault()
 
-		transactions, err := db.Transactions(initFilter)
+		transactions, err := greed.GetTransactions(db, initFilter)
 
 		if err != nil {
 			return err
@@ -226,7 +226,7 @@ func main() {
 	})
 
 	e.GET("/transactions/count", func(c echo.Context) error {
-		count, err := db.CountTransactions()
+		count, err := greed.CountTransactions(db)
 
 		if err != nil {
 			return err
@@ -301,7 +301,8 @@ func main() {
 
 		description := c.FormValue("description")
 
-		_, err = db.CreateTransaction(
+		_, err = greed.CreateTransaction(
+			db,
 			greed.Account{Id: accountId, Name: accountData[1]},
 			parsedAmount,
 			greed.Category{Id: categoryId, Name: categoryData[1]},
@@ -333,19 +334,19 @@ func main() {
 			edit = false
 		}
 
-		transaction, err := db.TransactionById(transactionId)
+		transaction, err := greed.GetTransactionById(db, transactionId)
 
 		if err != nil {
 			return err
 		}
 
 		if edit {
-			accounts, err := db.Accounts()
+			accounts, err := greed.GetAccounts(db)
 			if err != nil {
 				return nil
 			}
 
-			categories, err := db.Categories()
+			categories, err := greed.GetCategories(db)
 			if err != nil {
 				return nil
 			}
@@ -356,12 +357,12 @@ func main() {
 	})
 
 	e.GET("/transactions/new", func(c echo.Context) error {
-		accounts, err := db.Accounts()
+		accounts, err := greed.GetAccounts(db)
 		if err != nil {
 			return nil
 		}
 
-		categories, err := db.Categories()
+		categories, err := greed.GetCategories(db)
 		if err != nil {
 			return nil
 		}
@@ -383,7 +384,7 @@ func main() {
 			return err
 		}
 
-		err = db.DeleteTransaction(transactionId)
+		err = greed.DeleteTransaction(db, transactionId)
 
 		if err != nil {
 			return err
@@ -399,7 +400,7 @@ func main() {
 			return err
 		}
 
-		transaction, err := db.TransactionById(transactionId)
+		transaction, err := greed.GetTransactionById(db, transactionId)
 
 		formValues, err := c.FormParams()
 
@@ -472,7 +473,7 @@ func main() {
 		transaction.Category = greed.Category{Id: newCategoryId, Name: newCategoryData[1]}
 		transaction.CreatedAt = newCreatedAt
 
-		db.UpdateTransaction(transaction)
+		greed.UpdateTransaction(db, transaction)
 
 		return renderTempl(c, views.Transaction(transaction, templ.Attributes{}))
 	})

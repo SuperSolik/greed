@@ -14,8 +14,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-type Database struct {
-	Handle *sql.DB
+type DatabaseInterface interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
 }
 
 func GetDbUrl() string {
@@ -27,26 +29,23 @@ func GetDbUrl() string {
 	return url
 }
 
-func ConnectDb() (Database, error) {
+func ConnectDb() (*sql.DB, error) {
 	url := GetDbUrl()
-
-	var database Database
 
 	db, err := sql.Open("libsql", url)
 
 	if err != nil {
-		return database, err
+		return nil, err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return database, nil
+		return nil, err
 	}
 
 	log.Printf("DB %v connected\n", url)
 
-	database.Handle = db
-	return database, nil
+	return db, nil
 }
 
 type Account struct {
@@ -72,11 +71,11 @@ type Category struct {
 	Name string
 }
 
-func (d Database) Accounts() ([]Account, error) {
+func GetAccounts[T DatabaseInterface](db T) ([]Account, error) {
 	// An albums slice to hold data from returned rows.
 	var accounts []Account
 
-	rows, err := d.Handle.Query("select * from accounts order by id asc")
+	rows, err := db.Query("select * from accounts order by id asc")
 	if err != nil {
 		return nil, fmt.Errorf("fetch accounts failed: %v", err)
 	}
@@ -101,10 +100,10 @@ func (d Database) Accounts() ([]Account, error) {
 	return accounts, nil
 }
 
-func (d Database) CountAccounts() (int64, error) {
+func CountAccounts[T DatabaseInterface](db T) (int64, error) {
 	var count int64
 
-	row := d.Handle.QueryRow("select count(*) from accounts")
+	row := db.QueryRow("select count(*) from accounts")
 
 	if err := row.Scan(&count); err != nil {
 		return 0, err
@@ -113,7 +112,8 @@ func (d Database) CountAccounts() (int64, error) {
 	return count, nil
 }
 
-func (d Database) CreateAccount(
+func CreateAccount[T DatabaseInterface](
+	db T,
 	name string,
 	amount *big.Float,
 	currency string,
@@ -126,7 +126,7 @@ func (d Database) CreateAccount(
 		Description: description,
 	}
 
-	result, err := d.Handle.Exec(
+	result, err := db.Exec(
 		"insert into accounts (name, amount, currency, description) values (?, ?, ?, ?)",
 		account.Name, account.Amount.String(), account.Currency, account.Description,
 	)
@@ -146,8 +146,8 @@ func (d Database) CreateAccount(
 	return account, nil
 }
 
-func (d Database) UpdateAccount(account Account) (int64, error) {
-	result, err := d.Handle.Exec(
+func UpdateAccount[T DatabaseInterface](db T, account Account) (int64, error) {
+	result, err := db.Exec(
 		"update accounts set name = ?, amount = ?, currency = ?, description = ? where accounts.id = ?",
 		account.Name, account.Amount.String(), account.Currency, account.Description, account.Id,
 	)
@@ -171,13 +171,13 @@ func (d Database) UpdateAccount(account Account) (int64, error) {
 	return rowsUpdated, nil
 }
 
-func (d Database) AccountById(id int64) (Account, error) {
+func GetAccountById[T DatabaseInterface](db T, id int64) (Account, error) {
 	// An album to hold data from the returned row.
 	a := Account{Id: id}
 
 	var amount float64
 
-	row := d.Handle.QueryRow("select name, amount, currency, description from accounts where id = ?", id)
+	row := db.QueryRow("select name, amount, currency, description from accounts where id = ?", id)
 	if err := row.Scan(&a.Name, &amount, &a.Currency, &a.Description); err != nil {
 		return a, err
 	}
@@ -187,8 +187,8 @@ func (d Database) AccountById(id int64) (Account, error) {
 	return a, nil
 }
 
-func (d Database) DeleteAccount(accountId int64) error {
-	result, err := d.Handle.Exec(
+func DeleteAccount[T DatabaseInterface](db T, accountId int64) error {
+	result, err := db.Exec(
 		`
 		delete from accounts
 		where accounts.id = ?
@@ -256,7 +256,7 @@ func (f TransactionFilter) BuildQueryParams() string {
 	return "?" + strings.Join(params, "&")
 }
 
-func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) {
+func GetTransactions[T DatabaseInterface](db T, filter TransactionFilter) ([]Transaction, error) {
 	log.Printf("Querying transactions with filter=%v", filter)
 
 	query := sq.
@@ -316,7 +316,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 
 	var transactions []Transaction
 
-	rows, err := d.Handle.Query(sql, args...)
+	rows, err := db.Query(sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetch transactions failed: %v", err)
 	}
@@ -354,10 +354,10 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 	return transactions, nil
 }
 
-func (d Database) CountTransactions() (int64, error) {
+func CountTransactions[T DatabaseInterface](db T) (int64, error) {
 	var count int64
 
-	row := d.Handle.QueryRow("select count(*) from transactions")
+	row := db.QueryRow("select count(*) from transactions")
 
 	if err := row.Scan(&count); err != nil {
 		return 0, err
@@ -365,7 +365,7 @@ func (d Database) CountTransactions() (int64, error) {
 
 	return count, nil
 }
-func (d Database) TransactionById(id int64) (Transaction, error) {
+func GetTransactionById[T DatabaseInterface](db T, id int64) (Transaction, error) {
 	// An album to hold data from the returned row.
 	t := Transaction{Id: id}
 	var a Account
@@ -391,7 +391,7 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 		left join categories on transactions.category_id = categories.id
 		where transactions.id = ?;
 	`
-	row := d.Handle.QueryRow(query, id)
+	row := db.QueryRow(query, id)
 	if err := row.Scan(&a.Id, &a.Name, &amount, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
 		return t, fmt.Errorf("fetch transactions row failed: %v", err)
 	}
@@ -414,7 +414,8 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 	return t, nil
 }
 
-func (d Database) CreateTransaction(
+func CreateTransaction[T DatabaseInterface](
+	db T,
 	account Account,
 	amount *big.Float,
 	category Category,
@@ -429,7 +430,7 @@ func (d Database) CreateTransaction(
 		Description: description,
 	}
 
-	result, err := d.Handle.Exec(
+	result, err := db.Exec(
 		`
 		insert into transactions (account_id, amount, category_id, created_at, description) 
 		values (?, ?, ?, ?, ?)
@@ -448,8 +449,8 @@ func (d Database) CreateTransaction(
 	return transaction, nil
 }
 
-func (d Database) UpdateTransaction(transaction Transaction) (int64, error) {
-	result, err := d.Handle.Exec(
+func UpdateTransaction[T DatabaseInterface](db T, transaction Transaction) (int64, error) {
+	result, err := db.Exec(
 		`
 		update transactions set account_id = ?, amount = ?, category_id = ?, created_at = ?, description = ?
 		where transactions.id = ?
@@ -473,8 +474,8 @@ func (d Database) UpdateTransaction(transaction Transaction) (int64, error) {
 	return rowsUpdated, nil
 }
 
-func (d Database) DeleteTransaction(transactionId int64) error {
-	result, err := d.Handle.Exec(
+func DeleteTransaction[T DatabaseInterface](db T, transactionId int64) error {
+	result, err := db.Exec(
 		`
 		delete from transactions
 		where transactions.id = ?
@@ -499,11 +500,11 @@ func (d Database) DeleteTransaction(transactionId int64) error {
 	return nil
 }
 
-func (d Database) Categories() ([]Category, error) {
+func GetCategories[T DatabaseInterface](db T) ([]Category, error) {
 	// An albums slice to hold data from returned rows.
 	var categories []Category
 
-	rows, err := d.Handle.Query("select * from categories order by id asc")
+	rows, err := db.Query("select * from categories order by id asc")
 	if err != nil {
 		return nil, fmt.Errorf("fetch categories failed: %v", err)
 	}
