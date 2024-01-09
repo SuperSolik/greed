@@ -5,42 +5,62 @@ import "time"
 import "supersolik/greed/pkg"
 import "strconv"
 
-templ DateTimePicker(timestamp time.Time, dateOnly, clientLocal bool, disabled bool) {
+type DateTimePickerArgs struct {
+	DateTime      time.Time
+	DateInputName string
+	TimeInputName string
+	DateOnly      bool
+	ClientLocal   bool
+	Disabled      bool
+}
+
+func DefaultDateTimePickerArgs(dateTime time.Time, clientLocal bool) DateTimePickerArgs {
+	return DateTimePickerArgs{
+		DateTime:      dateTime,
+		DateInputName: "date",
+		TimeInputName: "time",
+		DateOnly:      false,
+		ClientLocal:   true,
+		Disabled:      false,
+	}
+}
+
+templ DateTimePicker(args DateTimePickerArgs) {
 	<!-- default type="datime-local" allows only to pick date -->
 	<div
 		class="flex items-center"
 	>
 		<input
-			if clientLocal {
+			if args.ClientLocal {
 				_={ fmt.Sprintf(
 					"on load call convertTz(\"%v\") then put getInputDate(it) into me.value",
-					timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
+					args.DateTime.Format(greed.DATETIME_DB_LAYOUT)) }
 			}
-			disabled?={ disabled }
+			readonly?={ args.Disabled }
 			class="h-full max-h-6"
 			id="date"
 			type="date"
-			name="date"
-			value={ timestamp.Format(time.DateOnly) }
+			name={ args.DateInputName }
+			value={ args.DateTime.Format(time.DateOnly) }
 		/>
-		if !dateOnly {
+		if !args.DateOnly {
 			<span>&nbsp;</span>
 			<input
-				if clientLocal {
+				if args.ClientLocal {
 					_={ fmt.Sprintf(
 				"on load call convertTz(\"%v\") then put getInputTime(it) into me.value",
-				timestamp.Format(greed.DATETIME_DB_LAYOUT)) }
+				args.DateTime.Format(greed.DATETIME_DB_LAYOUT)) }
 				}
-				disabled?={ disabled }
+				readonly?={ args.Disabled }
 				class="h-full max-h-6"
 				id="time"
 				type="time"
-				name="time"
+				name={ args.TimeInputName }
 				min="00:00"
 				max="23:59"
-				value={ timestamp.Format(greed.TIME_INPUT_LAYOUT) }
+				value={ args.DateTime.Format(greed.TIME_INPUT_LAYOUT) }
 			/>
-			if clientLocal {
+			if args.ClientLocal {
 				<!-- getting the user's timezone -->
 				<input
 					_="on load call getTimeZone() put it into me.value"
@@ -128,7 +148,7 @@ templ TransactionForm(transaction greed.Transaction, accounts []greed.Account, c
 		<td class="max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
-				@DateTimePicker(transaction.CreatedAt, false, true, false)
+				@DateTimePicker(DefaultDateTimePickerArgs(transaction.CreatedAt, true))
 			</div>
 		</td>
 		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
@@ -204,6 +224,9 @@ templ Transactions(transactions []greed.Transaction, filter greed.TransactionFil
 					"hx-trigger": "revealed", 
 					"hx-get": fmt.Sprintf("/transactions/content%v", filter.NextPage().BuildQueryParams()), 
 					"hx-swap": "afterend",
+					"hx-sync": "#filter-params:drop",
+					"hx-include": "this",
+					"hx-params": "none",
 				},
 			)
 		} else {
@@ -212,27 +235,33 @@ templ Transactions(transactions []greed.Transaction, filter greed.TransactionFil
 	}
 }
 
-templ DateRangeInput(dateStart, dateEnd time.Time, dateOnly, clientLocal, disabled bool) {
+templ DateRangeInput(dateStart, dateEnd time.Time, disabled bool) {
 	<div class="flex flex-row space-x-2">
 		<div class="flex flex-row">
 			<span>~from:</span>
-			@DateTimePicker(dateStart, dateOnly, clientLocal, disabled)
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled})
 		</div>
 		<div class="flex flex-row">
 			<span>~to:</span>
-			@DateTimePicker(dateEnd,  dateOnly ,clientLocal, disabled)
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled})
 		</div>
 	</div>
 }
 
 templ FilterForm() {
-	<div id="filter-params" hx-params class="p-3 space-y-4">
+	<div
+		id="filter-params"
+		class="p-3 space-y-4"
+		hx-get="/transactions/content"
+		hx-trigger="input delay:500ms"
+		hx-target="#transactions-body"
+		hx-include="this"
+		hx-params="*"
+		hx-sync="#filter-params select:queue last"
+	>
 		<div class="flex flex-row items-center">
 			<label for="search">~q:</label>
 			<input
-				hx-get="/transactions/content"
-				hx-trigger="input changed delay:500ms, search"
-				hx-target="#transactions-body"
 				type="search"
 				name="search"
 				placeholder="type to search..."
@@ -262,6 +291,7 @@ templ FilterForm() {
 					hx-get="/daterange/input"
 					hx-target="#date-range-filter"
 					hx-swap="innerHTML"
+					hx-include="this"
 					hx-params
 					class="appearance-none"
 					name="date_range_type"
@@ -277,7 +307,9 @@ templ FilterForm() {
 					<option value={ greed.Custom }>custom</option>
 				</select>
 			</div>
-			<div id="date-range-filter"></div>
+			<div
+				id="date-range-filter"
+			></div>
 		</div>
 	</div>
 }

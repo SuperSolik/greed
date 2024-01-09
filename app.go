@@ -149,43 +149,57 @@ func main() {
 	e.GET("/transactions/content", func(c echo.Context) error {
 		var filter greed.TransactionFilter
 
-		// parse page
-		var page uint64
-
 		pageParam := c.QueryParam("page")
+		pageSizeParam := c.QueryParam("size")
+		search := c.QueryParam("search")
+		dateStart := c.QueryParam("date_start")
+		dateEnd := c.QueryParam("date_end")
 
+		// parse page
 		if pageParam != "" {
-			page, err = strconv.ParseUint(pageParam, 10, 64)
+			page, err := strconv.ParseUint(pageParam, 10, 64)
 
 			if err != nil {
 				return err
 			}
-		} else {
-			page = 0
-		}
 
-		var pageSize uint64
+			filter.Page = page
+		} else {
+			filter.Page = 0
+		}
 
 		// parse page size
-		pageSizeParam := c.QueryParam("size")
-
 		if pageSizeParam != "" {
-			pageSize, err = strconv.ParseUint(pageSizeParam, 10, 64)
+			pageSize, err := strconv.ParseUint(pageSizeParam, 10, 64)
 
 			if err != nil {
 				return err
 			}
+
+			filter.PageSize = pageSize
 		} else {
-			pageSize = greed.DefaultPageSize
+			filter.PageSize = greed.DefaultPageSize
 		}
-
-		search := c.QueryParam("search")
-
-		filter.Page = page
-		filter.PageSize = pageSize
 
 		if search != "" {
 			filter.Search = search
+		}
+
+		if dateStart != "" {
+			parsedDateStart, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateStart)
+			if err != nil {
+				return err
+			}
+			filter.DateStart = parsedDateStart.UTC()
+		}
+
+		if dateEnd != "" {
+			parsedDateEnd, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateEnd)
+			if err != nil {
+				return err
+			}
+			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
+			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
 		}
 
 		transactions, err := db.Transactions(filter)
@@ -471,22 +485,22 @@ func main() {
 
 		switch rangeType {
 		case greed.Today:
-			return renderTempl(c, views.DateRangeInput(now, now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(now, now, true))
 		case greed.Last7Days:
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -6), now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -6), now, true))
 		case greed.ThisWeek:
 			diff := [7]int{6, 0, 1, 2, 3, 4, 5}
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -diff[now.Weekday()]), now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -diff[now.Weekday()]), now, true))
 		case greed.Last30Days:
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -29), now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -29), now, true))
 		case greed.ThisMonth:
 			startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-			return renderTempl(c, views.DateRangeInput(startOfMonth, now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(startOfMonth, now, true))
 		case greed.ThisYear:
 			startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
-			return renderTempl(c, views.DateRangeInput(startOfYear, now, true, false, true))
+			return renderTempl(c, views.DateRangeInput(startOfYear, now, true))
 		case greed.Custom:
-			return renderTempl(c, views.DateRangeInput(now, now, true, false, false))
+			return renderTempl(c, views.DateRangeInput(now, now, false))
 		}
 
 		return c.NoContent(http.StatusOK)

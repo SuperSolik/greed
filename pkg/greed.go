@@ -222,7 +222,7 @@ type TransactionFilter struct {
 	DateEnd   time.Time
 }
 
-const DefaultPageSize uint64 = 20
+const DefaultPageSize uint64 = 15
 
 func (f TransactionFilter) NextPage() TransactionFilter {
 	f.Page += 1
@@ -258,6 +258,8 @@ func (f TransactionFilter) BuildQueryParams() string {
 }
 
 func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) {
+	log.Printf("Querying transactions with filter=%v", filter)
+
 	query := sq.
 		Select(
 			"transactions.id as transaction_id",
@@ -308,7 +310,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 
 	sql, args, err := query.ToSql()
 
-	log.Printf("Transactions query: %v", sql)
+	// log.Printf("Transactions query: %v", sql)
 
 	if err != nil {
 		return nil, err
