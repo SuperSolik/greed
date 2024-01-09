@@ -62,7 +62,6 @@ type Transaction struct {
 	Id          int64
 	Account     Account
 	Amount      *big.Float
-	IsExpense   bool
 	Category    Category
 	CreatedAt   time.Time
 	Description string
@@ -266,7 +265,6 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 			"accounts.id as account_id",
 			"accounts.name as account_name",
 			"transactions.amount as amount",
-			"transactions.is_expense as is_expense",
 			"categories.id as category_id",
 			"categories.name as category_name",
 			"transactions.created_at as created_at",
@@ -331,7 +329,7 @@ func (d Database) Transactions(filter TransactionFilter) ([]Transaction, error) 
 
 		var amount float64
 		var createdAt string
-		if err := rows.Scan(&t.Id, &a.Id, &a.Name, &amount, &t.IsExpense, &c.Id, &c.Name, &createdAt, &t.Description); err != nil {
+		if err := rows.Scan(&t.Id, &a.Id, &a.Name, &amount, &c.Id, &c.Name, &createdAt, &t.Description); err != nil {
 			return nil, fmt.Errorf("fetch transactions row failed: %v", err)
 		}
 		// float64 -> bigFloat
@@ -383,7 +381,6 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 			accounts.id as account_id,
 			accounts.name as account_name,
 			transactions.amount,
-			transactions.is_expense,
 			categories.id as category_id,
 			categories.name as category_name,
 			transactions.created_at,
@@ -395,7 +392,7 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 		where transactions.id = ?;
 	`
 	row := d.Handle.QueryRow(query, id)
-	if err := row.Scan(&a.Id, &a.Name, &amount, &t.IsExpense, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
+	if err := row.Scan(&a.Id, &a.Name, &amount, &categoryId, &categoryName, &createdAt, &t.Description); err != nil {
 		return t, fmt.Errorf("fetch transactions row failed: %v", err)
 	}
 	// float64 -> bigFloat
@@ -420,7 +417,6 @@ func (d Database) TransactionById(id int64) (Transaction, error) {
 func (d Database) CreateTransaction(
 	account Account,
 	amount *big.Float,
-	isExpense bool,
 	category Category,
 	createdAt time.Time,
 	description string,
@@ -428,7 +424,6 @@ func (d Database) CreateTransaction(
 	transaction := Transaction{
 		Account:     account,
 		Amount:      amount,
-		IsExpense:   isExpense,
 		Category:    category,
 		CreatedAt:   createdAt,
 		Description: description,
@@ -436,10 +431,10 @@ func (d Database) CreateTransaction(
 
 	result, err := d.Handle.Exec(
 		`
-		insert into transactions (account_id, amount, is_expense, category_id, created_at, description) 
-		values (?, ?, ?, ?, ?, ?)
+		insert into transactions (account_id, amount, category_id, created_at, description) 
+		values (?, ?, ?, ?, ?)
 		`,
-		transaction.Account.Id, transaction.Amount.String(), transaction.IsExpense, transaction.Category.Id, transaction.CreatedAt.Format(DATETIME_DB_LAYOUT), transaction.Description,
+		transaction.Account.Id, transaction.Amount.String(), transaction.Category.Id, transaction.CreatedAt.Format(DATETIME_DB_LAYOUT), transaction.Description,
 	)
 	if err != nil {
 		return transaction, fmt.Errorf("failed to create transaction %v: %v", transaction, err)
@@ -456,10 +451,10 @@ func (d Database) CreateTransaction(
 func (d Database) UpdateTransaction(transaction Transaction) (int64, error) {
 	result, err := d.Handle.Exec(
 		`
-		update transactions set account_id = ?, amount = ?, is_expense = ?, category_id = ?, created_at = ?, description = ?
+		update transactions set account_id = ?, amount = ?, category_id = ?, created_at = ?, description = ?
 		where transactions.id = ?
 		`,
-		transaction.Account.Id, transaction.Amount.String(), transaction.IsExpense, transaction.Category.Id, transaction.CreatedAt.Format(DATETIME_DB_LAYOUT), transaction.Description, transaction.Id,
+		transaction.Account.Id, transaction.Amount.String(), transaction.Category.Id, transaction.CreatedAt.Format(DATETIME_DB_LAYOUT), transaction.Description, transaction.Id,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to update transaction %v: %v", transaction, err)

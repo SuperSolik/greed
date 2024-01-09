@@ -304,7 +304,6 @@ func main() {
 		_, err = db.CreateTransaction(
 			greed.Account{Id: accountId, Name: accountData[1]},
 			parsedAmount,
-			false,
 			greed.Category{Id: categoryId, Name: categoryData[1]},
 			createdAt,
 			description,
