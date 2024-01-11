@@ -17,10 +17,10 @@
 Account     date    description
 ```
 
+- [x] create `exchange` category (might not affects the cash flow stats? will figure it out later)
 - [ ] active search for accounts
 - [ ] accounts filtering by currency
 - [ ] support for terms (somehow) in active search
-- [ ] create special `exchange` category, which won't be counted in the start of cash flow / expenses
 
 ## transactions filtering
 - [x] datetime ranges

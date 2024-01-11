@@ -44,7 +44,8 @@ VALUES
     ('🎮 Fun'),
     ('🧭 Travel'),
     ('🧾 Bills and Taxes'),
-    ('💆 Beauty and Health');
+    ('💆 Beauty and Health'),
+    ('💱 Exchange');
 
 INSERT INTO transactions (account_id, amount, category_id, created_at, description)
 VALUES
