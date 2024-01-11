@@ -5,7 +5,7 @@
 - [x] is expense support for transactions (rendering, input) - expenses are just transactions with negative amount lol, easy (actually not such a great idea, but it's for me and I am okay with it)
 - [x] transactions search (`LIKE %<value>%` by account name, description, categories)
 - [x] rework db logic to support both db handle and transaction handle somehow - used interface to conform both sql.Tx and sql.DB
-- [ ] implement db transactions on transaction create/update (to update account as well) 
+- [x] implement db transactions on transaction create/update (to update account as well) 
 - [ ] main screen with stats
 - [ ] rework layout for mobile screen
 - [ ] make new account card and edit account card the same thing, as I did for transactions
@@ -20,6 +20,7 @@ Account     date    description
 - [ ] active search for accounts
 - [ ] accounts filtering by currency
 - [ ] support for terms (somehow) in active search
+- [ ] create special `exchange` category, which won't be counted in the start of cash flow / expenses
 
 ## transactions filtering
 - [x] datetime ranges

@@ -301,16 +301,14 @@ func main() {
 
 		description := c.FormValue("description")
 
-		_, err = greed.CreateTransaction(
+		if _, err := greed.CreateTransactionWithRecalc(
 			db,
 			greed.Account{Id: accountId, Name: accountData[1]},
 			parsedAmount,
 			greed.Category{Id: categoryId, Name: categoryData[1]},
 			createdAt,
 			description,
-		)
-
-		if err != nil {
+		); err != nil {
 			return err
 		}
 
@@ -473,7 +471,9 @@ func main() {
 		transaction.Category = greed.Category{Id: newCategoryId, Name: newCategoryData[1]}
 		transaction.CreatedAt = newCreatedAt
 
-		greed.UpdateTransaction(db, transaction)
+		if _, err := greed.UpdateTransactionWithRecalc(db, transaction); err != nil {
+			return err
+		}
 
 		return renderTempl(c, views.Transaction(transaction, templ.Attributes{}))
 	})

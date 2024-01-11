@@ -449,6 +449,50 @@ func CreateTransaction[T DatabaseInterface](
 	return transaction, nil
 }
 
+func CreateTransactionWithRecalc(
+	db *sql.DB,
+	account Account,
+	amount *big.Float,
+	category Category,
+	createdAt time.Time,
+	description string,
+) (Transaction, error) {
+	var transaction Transaction
+
+	tx, err := db.Begin()
+	if err != nil {
+		return transaction, err
+	}
+	defer tx.Rollback()
+
+	transaction, err = CreateTransaction(
+		tx,
+		account,
+		amount,
+		category,
+		createdAt,
+		description,
+	)
+
+	if err != nil {
+		return transaction, err
+	}
+
+	account, err = GetAccountById(tx, transaction.Account.Id)
+
+	account.Amount.Add(account.Amount, transaction.Amount)
+
+	if _, err := UpdateAccount(tx, account); err != nil {
+		return transaction, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return transaction, err
+	}
+
+	return transaction, nil
+}
+
 func UpdateTransaction[T DatabaseInterface](db T, transaction Transaction) (int64, error) {
 	result, err := db.Exec(
 		`
@@ -471,6 +515,45 @@ func UpdateTransaction[T DatabaseInterface](db T, transaction Transaction) (int6
 	case rowsUpdated > 2:
 		return rowsUpdated, fmt.Errorf("transaction %v update affected more than 1 row", transaction)
 	}
+	return rowsUpdated, nil
+}
+
+func UpdateTransactionWithRecalc(db *sql.DB, transaction Transaction) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	oldTransaction, err := GetTransactionById(tx, transaction.Id)
+
+	if err != nil {
+		return 0, err
+
+	}
+
+	rowsUpdated, err := UpdateTransaction(
+		tx,
+		transaction,
+	)
+
+	if err != nil {
+		return rowsUpdated, err
+	}
+
+	account, err := GetAccountById(tx, transaction.Account.Id)
+
+	account.Amount.Sub(account.Amount, oldTransaction.Amount)
+	account.Amount.Add(account.Amount, transaction.Amount)
+
+	if _, err := UpdateAccount(tx, account); err != nil {
+		return rowsUpdated, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return rowsUpdated, err
+	}
+
 	return rowsUpdated, nil
 }
 
