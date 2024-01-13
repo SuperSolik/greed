@@ -32,8 +32,20 @@ func main() {
 	e.Use(middleware.Logger())
 
 	e.GET("/", func(c echo.Context) error {
+		var stats greed.Stats
+		if categoriesSpent, err := greed.GetExpensesByCategory(db); err != nil {
+			return err
+		} else {
+			stats.CategoriesSpent = categoriesSpent
+		}
 
-		return renderTempl(c, views.Page(views.Stats()))
+		if balance, err := greed.GetBalance(db); err != nil {
+			return err
+		} else {
+			stats.Balance = balance
+		}
+
+		return renderTempl(c, views.Page(views.StatsContent(stats)))
 	})
 
 	e.GET("/accounts", func(c echo.Context) error {
@@ -44,7 +56,7 @@ func main() {
 		}
 
 		return renderTempl(c, views.Page(
-			views.Accounts(accounts),
+			views.AccountsContent(accounts),
 		))
 	})
 
@@ -226,7 +238,7 @@ func main() {
 		}
 
 		return renderTempl(c, views.Page(
-			views.TransactionsData(transactions, initFilter),
+			views.TransactionsContent(transactions, initFilter),
 		))
 	})
 

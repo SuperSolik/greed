@@ -608,3 +608,125 @@ func GetCategories[T DatabaseInterface](db T) ([]Category, error) {
 
 	return categories, nil
 }
+
+type CurrencyAmount struct {
+	Currency string
+	Amount   *big.Float
+}
+
+type CashFlow struct {
+	Value    CurrencyAmount
+	Positive bool
+}
+
+type CategorySpent struct {
+	Category Category
+	Value    CurrencyAmount
+}
+
+type Stats struct {
+	Balance         []CurrencyAmount
+	CashFlow        []CashFlow
+	CategoriesSpent []Pair[string, []CategorySpent]
+}
+
+func GetBalance[T DatabaseInterface](db T) ([]CurrencyAmount, error) {
+
+	var result []CurrencyAmount
+
+	sql := `
+	select sum(abs(accounts.amount)) as total_amount, accounts.currency as currency
+	from accounts 
+	group by currency
+	`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, fmt.Errorf("fetch balances failed: %v", err)
+	}
+	defer rows.Close()
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for rows.Next() {
+		var ca CurrencyAmount
+		var amount float64
+
+		if err := rows.Scan(&amount, &ca.Currency); err != nil {
+			return nil, fmt.Errorf("fetch balances row failed: %v", err)
+		}
+
+		// float64 -> bigFloat
+		ca.Amount = big.NewFloat(amount)
+
+		result = append(result, ca)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during balances iteration: %v", err)
+	}
+
+	return result, nil
+}
+
+func GetExpensesByCategory[T DatabaseInterface](db T) ([]Pair[string, []CategorySpent], error) {
+	var result []Pair[string, []CategorySpent]
+
+	sql := `
+		select categories.id, categories.name, sum(abs(transactions.amount)) as total_amount, accounts.currency as currency
+		from transactions 
+		join categories on categories.id = transactions.category_id 
+		join accounts on accounts.id = transactions.account_id 
+		where transactions.amount < 0
+		group by category_id, currency
+		order by currency asc
+	`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, fmt.Errorf("fetch categories total spent failed: %v", err)
+	}
+	defer rows.Close()
+
+	var prevKey string = ""
+	var groupChunk []CategorySpent = nil
+
+	// Loop through rows, using Scan to assign column data to struct fields.
+	for rows.Next() {
+		var cs CategorySpent
+		var amount float64
+
+		if err := rows.Scan(&cs.Category.Id, &cs.Category.Name, &amount, &cs.Value.Currency); err != nil {
+			return nil, fmt.Errorf("fetch categories spent row failed: %v", err)
+		}
+
+		// float64 -> bigFloat
+		cs.Value.Amount = big.NewFloat(amount)
+
+		key := cs.Value.Currency
+
+		if key != prevKey {
+			if len(groupChunk) > 0 {
+				result = append(result, Pair[string, []CategorySpent]{
+					First:  prevKey,
+					Second: groupChunk,
+				})
+				groupChunk = nil
+			}
+		}
+
+		prevKey = key
+		groupChunk = append(groupChunk, cs)
+	}
+
+	if len(groupChunk) > 0 {
+		result = append(result, Pair[string, []CategorySpent]{
+			First:  prevKey,
+			Second: groupChunk,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during categories spent iteration: %v", err)
+	}
+
+	return result, nil
+}

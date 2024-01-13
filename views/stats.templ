@@ -1,6 +1,7 @@
 package views
 
 import "math/big"
+import "supersolik/greed/pkg"
 
 templ ColoredSignedNumber(number *big.Float, positive bool) {
 	<div class="flex flex-row">
@@ -13,80 +14,61 @@ templ ColoredSignedNumber(number *big.Float, positive bool) {
 	</div>
 }
 
-templ Stats() {
-	<div class="p-3 space-x-3 flex flex-row items-center">
-		<div>
-			Balance:
+templ CategoriesExpenses(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent]) {
+	<div class="space-y-1.5">
+		<div class="font-medium">
+			list TotalExpenses[category, amount, currency]:
 		</div>
 		<div>
-			10000
+			<table class="max-w-96 w-full space-between table-auto border-separate border-spacing-y-3">
+				<tbody>
+					for _, pair := range groupedCategoriesSpent {
+						<tr>
+							<td class="font-medium" colspan="3">{ pair.First }</td>
+						</tr>
+						for _, cs := range pair.Second {
+							<tr>
+								<td class="text-start">{ cs.Category.Name }</td>
+								<td class="test-start">{ cs.Value.Amount.String() } </td>
+								<td class="text-end">{ cs.Value.Currency } </td>
+							</tr>
+						}
+					}
+				</tbody>
+			</table>
 		</div>
-		<div>
-			in
-		</div>
-		<select class="bg-transparent" name="currency">
-			<option value="EUR">EUR</option>
-			<option value="USD">USD</option>
-			<option value="RSD">RSD</option>
-		</select>
 	</div>
-	<div class="p-3 space-x-3 flex flex-row items-center">
-		<div>
-			Cash flow:
+}
+
+templ Balance(balances []greed.CurrencyAmount) {
+	<div class="space-y-1.5">
+		<div class="font-medium">
+			list Balance[amount, currency]:
 		</div>
 		<div>
-			@ColoredSignedNumber(big.NewFloat(123.123), true)
+			<table class="max-w-96 w-full space-between table-auto border-separate border-spacing-y-3">
+				<tbody>
+					for _, b := range balances {
+						<tr>
+							<td clas="text-start">{ b.Amount.String() } </td>
+							<td class="text-end">{ b.Currency } </td>
+						</tr>
+					}
+				</tbody>
+			</table>
 		</div>
-		<div>
-			~c:
-		</div>
-		<select class="bg-transparent" name="currency">
-			<option value="EUR">EUR</option>
-			<option value="USD">USD</option>
-			<option value="RSD">RSD</option>
-		</select>
 	</div>
-	<div class="p-3 space-x-3 flex flex-row items-center">
-		<div>
-			Total expense:
-		</div>
-		<div>
-			@ColoredSignedNumber(big.NewFloat(50000.75), false)
-		</div>
-		<div>
-			in
-		</div>
-		<select class="bg-transparent" name="currency">
-			<option value="EUR">EUR</option>
-			<option value="USD">USD</option>
-			<option value="RSD">RSD</option>
-		</select>
+}
+
+templ Stats(stats greed.Stats) {
+	<div id="stats" class="space-y-3">
+		@Balance(stats.Balance)
+		@CategoriesExpenses(stats.CategoriesSpent)
 	</div>
-	<div class="p-3 space-y-3 flex flex-col items-baseline">
-		<div class="space-x-3 flex flex-row items-center">
-			<div>
-				Expenses by category
-			</div>
-			<div>
-				in	
-			</div>
-			<select class="bg-transparent" name="currency">
-				<option value="EUR">EUR</option>
-				<option value="USD">USD</option>
-				<option value="RSD">RSD</option>
-			</select>
-		</div>
-		<table class="w-80 space-between table-auto border-separate border-spacing-y-3">
-			<tbody>
-				<tr>
-					<td>Category 1</td>
-					<td>$500</td>
-				</tr>
-				<tr>
-					<td>Category 2</td>
-					<td>$400</td>
-				</tr>
-			</tbody>
-		</table>
+}
+
+templ StatsContent(stats greed.Stats) {
+	<div class="p-3 space-y-3">
+		@Stats(stats)
 	</div>
 }
