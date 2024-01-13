@@ -1,7 +1,7 @@
 package views
 
 import "time"
-import "fmt"
+import "supersolik/greed/pkg"
 
 templ EditIndicator() {
 	<span class="text-sm">*</span>
@@ -37,7 +37,9 @@ templ Page(content templ.Component) {
 				<div class="flex flex-row p-3 items-baseline">
 					<div class="mr-3 flex flex-col">
 						<a class="text-lg font-medium" href="/">Greed by @SuperSolik</a>
-						<div>{ fmt.Sprintf("<d>%v</d>", time.Now().UTC().Format(time.DateOnly)) }</div>
+						<div>
+							{ time.Now().UTC().Format(greed.DATE_NICE_LAYOUT) }
+						</div>
 					</div>
 					<div>
 						<nav>

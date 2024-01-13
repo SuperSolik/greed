@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -705,6 +706,10 @@ func GetExpensesByCategory[T DatabaseInterface](db T) ([]Pair[string, []Category
 
 		if key != prevKey {
 			if len(groupChunk) > 0 {
+				sort.SliceStable(groupChunk, func(i, j int) bool {
+					return groupChunk[i].Value.Amount.Cmp(groupChunk[j].Value.Amount) > 0
+				})
+
 				result = append(result, Pair[string, []CategorySpent]{
 					First:  prevKey,
 					Second: groupChunk,
@@ -718,6 +723,9 @@ func GetExpensesByCategory[T DatabaseInterface](db T) ([]Pair[string, []Category
 	}
 
 	if len(groupChunk) > 0 {
+		sort.SliceStable(groupChunk, func(i, j int) bool {
+			return groupChunk[i].Value.Amount.Cmp(groupChunk[j].Value.Amount) > 0
+		})
 		result = append(result, Pair[string, []CategorySpent]{
 			First:  prevKey,
 			Second: groupChunk,
