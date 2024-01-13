@@ -1,0 +1,92 @@
+package views
+
+import "math/big"
+
+templ ColoredSignedNumber(number *big.Float, positive bool) {
+	<div class="flex flex-row">
+		if positive {
+			<span class="text-emerald-600">+</span>
+		} else {
+			<span class="text-rose-600">-</span>
+		}
+		<span>{ number.String() }</span>
+	</div>
+}
+
+templ Stats() {
+	<div class="p-3 space-x-3 flex flex-row items-center">
+		<div>
+			Balance:
+		</div>
+		<div>
+			10000
+		</div>
+		<div>
+			in
+		</div>
+		<select class="bg-transparent" name="currency">
+			<option value="EUR">EUR</option>
+			<option value="USD">USD</option>
+			<option value="RSD">RSD</option>
+		</select>
+	</div>
+	<div class="p-3 space-x-3 flex flex-row items-center">
+		<div>
+			Cash flow:
+		</div>
+		<div>
+			@ColoredSignedNumber(big.NewFloat(123.123), true)
+		</div>
+		<div>
+			~c:
+		</div>
+		<select class="bg-transparent" name="currency">
+			<option value="EUR">EUR</option>
+			<option value="USD">USD</option>
+			<option value="RSD">RSD</option>
+		</select>
+	</div>
+	<div class="p-3 space-x-3 flex flex-row items-center">
+		<div>
+			Total expense:
+		</div>
+		<div>
+			@ColoredSignedNumber(big.NewFloat(50000.75), false)
+		</div>
+		<div>
+			in
+		</div>
+		<select class="bg-transparent" name="currency">
+			<option value="EUR">EUR</option>
+			<option value="USD">USD</option>
+			<option value="RSD">RSD</option>
+		</select>
+	</div>
+	<div class="p-3 space-y-3 flex flex-col items-baseline">
+		<div class="space-x-3 flex flex-row items-center">
+			<div>
+				Expenses by category
+			</div>
+			<div>
+				in	
+			</div>
+			<select class="bg-transparent" name="currency">
+				<option value="EUR">EUR</option>
+				<option value="USD">USD</option>
+				<option value="RSD">RSD</option>
+			</select>
+		</div>
+		<table class="w-80 space-between table-auto border-separate border-spacing-y-3">
+			<tbody>
+				<tr>
+					<td>Category 1</td>
+					<td>$500</td>
+				</tr>
+				<tr>
+					<td>Category 2</td>
+					<td>$400</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+}

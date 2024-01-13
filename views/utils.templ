@@ -1,5 +1,8 @@
 package views
 
+import "time"
+import "fmt"
+
 templ EditIndicator() {
 	<span class="text-sm">*</span>
 }
@@ -31,16 +34,14 @@ templ Page(content templ.Component) {
 		</head>
 		<body class="font-mono font-normal text-base">
 			<header>
-				<div class="flex flex-row p-3 ">
-					<div class="mr-3">
-						<a href="/">Greed ($$$) tracker</a>
+				<div class="flex flex-row p-3 items-baseline">
+					<div class="mr-3 flex flex-col">
+						<a class="text-lg font-medium" href="/">Greed by @SuperSolik</a>
+						<div>{ fmt.Sprintf("<d>%v</d>", time.Now().UTC().Format(time.DateOnly)) }</div>
 					</div>
 					<div>
 						<nav>
 							<ul class="flex flex-row space-x-1.5">
-								<li>
-									|>
-								</li>
 								<li>
 									<a
 										_="on mouseenter toggle .uppercase until mouseleave"

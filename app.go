@@ -32,6 +32,11 @@ func main() {
 	e.Use(middleware.Logger())
 
 	e.GET("/", func(c echo.Context) error {
+
+		return renderTempl(c, views.Page(views.Stats()))
+	})
+
+	e.GET("/accounts", func(c echo.Context) error {
 		accounts, err := greed.GetAccounts(db)
 
 		if err != nil {
