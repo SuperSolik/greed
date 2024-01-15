@@ -26,7 +26,7 @@
 
 ## transactions filtering
 - [x] datetime ranges
-- [ ] expense/income 
+- [x] expense/income 
 - [x] categories, accounts - not really, but handled by active search basically
 
 

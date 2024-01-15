@@ -186,6 +186,17 @@ templ FilterForm() {
 			/>
 		</div>
 		@DateRangePicker(greed.NotSelected)
+		<div class="flex flex-row space-x-3 items-center">
+			<div>~type:</div>
+			<div>
+				<input type="checkbox" id="income" name="income" value="true" checked/>
+				<label for="income">income</label>
+			</div>
+			<div>
+				<input type="checkbox" id="expense" name="expense" value="true" checked/>
+				<label for="expense">expense</label>
+			</div>
+		</div>
 	</div>
 }
 

@@ -215,11 +215,13 @@ func DeleteAccount[T DatabaseInterface](db T, accountId int64) error {
 }
 
 type TransactionFilter struct {
-	Page      uint64
-	PageSize  uint64
-	Search    string
-	DateStart time.Time
-	DateEnd   time.Time
+	Page          uint64
+	PageSize      uint64
+	Search        string
+	DateStart     time.Time
+	DateEnd       time.Time
+	FilterExpense bool
+	FilterIncome  bool
 }
 
 const DefaultPageSize uint64 = 15
@@ -274,6 +276,22 @@ func GetTransactions[T DatabaseInterface](db T, filter TransactionFilter) ([]Tra
 		From("transactions").
 		Join("accounts ON transactions.account_id = accounts.id").
 		LeftJoin("categories on transactions.category_id = categories.id")
+
+	if filter.FilterExpense {
+		query = query.Where(
+			sq.Lt{
+				"transactions.amount": 0,
+			},
+		)
+	}
+
+	if filter.FilterIncome {
+		query = query.Where(
+			sq.GtOrEq{
+				"transactions.amount": 0,
+			},
+		)
+	}
 
 	if filter.Search != "" {
 		likeTerm := fmt.Sprint("%", filter.Search, "%")

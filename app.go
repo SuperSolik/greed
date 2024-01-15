@@ -203,6 +203,14 @@ func main() {
 		search := c.QueryParam("search")
 		dateStart := c.QueryParam("date_start")
 		dateEnd := c.QueryParam("date_end")
+		filterExpense := c.QueryParam("expense") == "true"
+		filterIncome := c.QueryParam("income") == "true"
+
+		if filterExpense != filterIncome {
+			// either one of them provided  (both not empty, both not true)
+			filter.FilterIncome = filterIncome
+			filter.FilterExpense = filterExpense
+		}
 
 		// parse page
 		if pageParam != "" {
