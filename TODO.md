@@ -8,14 +8,16 @@
 - [x] implement db transactions on transaction create/update (to update account as well) 
 - [ ] main screen with stats
 - [ ] rework layout for mobile screen
+    - [ ] center content
+    - [ ] roll out custom account div-based card
+    - [ ] roll out custom transaction div-based card like:
+    
+    ```
+    [Category]  amount  very long
+    Account     date    description
+    ```
 - [ ] make new account card and edit account card the same thing, as I did for transactions
 - [ ] make new account form behave the same way as for transactions (send from server on request)
-- [ ] roll out custom transaction div-based card like:
-
-```
-[Category]  amount  very long
-Account     date    description
-```
 
 - [x] create `exchange` category (might not affects the cash flow stats? will figure it out later)
 - [ ] active search for accounts
