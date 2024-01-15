@@ -15,32 +15,47 @@ templ ColoredSignedNumber(number *big.Float, positive bool) {
 }
 
 templ CategoriesExpenses(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent]) {
-	<div class="space-y-1.5">
-		<div class="font-medium">
-			list TotalExpenses[category, amount, currency]:
-		</div>
-		<div>
-			<table class="max-w-96 w-full space-between table-auto border-separate border-spacing-y-3">
-				<tbody>
-					for _, pair := range groupedCategoriesSpent {
+	<div
+		id="categories-expenses"
+	>
+		<table class="max-w-96 w-full space-between table-auto border-separate border-spacing-y-3">
+			<tbody>
+				for _, pair := range groupedCategoriesSpent {
+					<tr>
+						<td class="font-medium" colspan="3">{ pair.First }</td>
+					</tr>
+					for _, cs := range pair.Second {
 						<tr>
-							<td class="font-medium" colspan="3">{ pair.First }</td>
+							<td class="text-start">{ cs.Category.Name }</td>
+							<td class="test-start">{ cs.Value.Amount.String() } </td>
+							<td class="text-end">{ cs.Value.Currency } </td>
 						</tr>
-						for _, cs := range pair.Second {
-							<tr>
-								<td class="text-start">{ cs.Category.Name }</td>
-								<td class="test-start">{ cs.Value.Amount.String() } </td>
-								<td class="text-end">{ cs.Value.Currency } </td>
-							</tr>
-						}
 					}
-				</tbody>
-			</table>
-		</div>
+				}
+			</tbody>
+		</table>
 	</div>
 }
 
-templ Balance(balances []greed.CurrencyAmount) {
+templ CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent]) {
+	<div
+		hx-get="/stats/categories"
+		hx-include="this"
+		hx-params="*"
+		hx-trigger="input delay:250ms"
+		hx-target="#categories-expenses"
+		hx-swap="outerHTML"
+		class="space-y-3"
+	>
+		<div class="font-medium">
+			list TotalExpenses[category, amount, currency]:
+		</div>
+		@DateRangePicker(greed.ThisMonth)
+		@CategoriesExpenses(groupedCategoriesSpent)
+	</div>
+}
+
+templ BalanceContent(balances []greed.CurrencyAmount) {
 	<div class="space-y-1.5">
 		<div class="font-medium">
 			list Balance[amount, currency]:
@@ -62,8 +77,8 @@ templ Balance(balances []greed.CurrencyAmount) {
 
 templ Stats(stats greed.Stats) {
 	<div id="stats" class="space-y-3">
-		@Balance(stats.Balance)
-		@CategoriesExpenses(stats.CategoriesSpent)
+		@BalanceContent(stats.Balance)
+		@CategoriesExpensesContent(stats.CategoriesSpent)
 	</div>
 }
 

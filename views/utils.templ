@@ -1,6 +1,7 @@
 package views
 
 import "time"
+import "fmt"
 import "supersolik/greed/pkg"
 
 templ EditIndicator() {
@@ -19,6 +20,131 @@ templ RefreshAnchor() {
 		hidden
 		_="on load send refreshContent to window then remove me end"
 	>FUCK</div>
+}
+
+type DateTimePickerArgs struct {
+	DateTime      time.Time
+	DateInputName string
+	TimeInputName string
+	DateOnly      bool
+	ClientLocal   bool
+	Disabled      bool
+}
+
+func DefaultDateTimePickerArgs(dateTime time.Time, clientLocal bool) DateTimePickerArgs {
+	return DateTimePickerArgs{
+		DateTime:      dateTime,
+		DateInputName: "date",
+		TimeInputName: "time",
+		DateOnly:      false,
+		ClientLocal:   true,
+		Disabled:      false,
+	}
+}
+
+templ DateTimePicker(args DateTimePickerArgs) {
+	<!-- default type="datime-local" allows only to pick date -->
+	<div
+		class="flex items-center"
+	>
+		<input
+			if args.ClientLocal {
+				_={ fmt.Sprintf(
+					"on load call convertTz(\"%v\") then put getInputDate(it) into me.value",
+					args.DateTime.Format(greed.DATETIME_DB_LAYOUT)) }
+			}
+			readonly?={ args.Disabled }
+			class="h-full max-h-6"
+			id="date"
+			type="date"
+			name={ args.DateInputName }
+			value={ args.DateTime.Format(time.DateOnly) }
+		/>
+		if !args.DateOnly {
+			<span>&nbsp;</span>
+			<input
+				if args.ClientLocal {
+					_={ fmt.Sprintf(
+				"on load call convertTz(\"%v\") then put getInputTime(it) into me.value",
+				args.DateTime.Format(greed.DATETIME_DB_LAYOUT)) }
+				}
+				readonly?={ args.Disabled }
+				class="h-full max-h-6"
+				id="time"
+				type="time"
+				name={ args.TimeInputName }
+				min="00:00"
+				max="23:59"
+				value={ args.DateTime.Format(greed.TIME_INPUT_LAYOUT) }
+			/>
+			if args.ClientLocal {
+				<!-- getting the user's timezone -->
+				<input
+					_="on load call getTimeZone() put it into me.value"
+					type="hidden"
+					name="tz"
+					value=""
+				/>
+			}
+		}
+	</div>
+}
+
+templ DateRangeInput(dateStart, dateEnd time.Time, disabled bool) {
+	<div class="flex flex-row space-x-2">
+		<div class="flex flex-row">
+			<span>~from:</span>
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled})
+		</div>
+		<div class="flex flex-row">
+			<span>~to:</span>
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled})
+		</div>
+	</div>
+}
+
+templ DateRangePicker(defaultOption greed.DateRangePickerOption) {
+	<div
+		class="flex flex-row items-center space-x-2"
+	>
+		<div
+			class="flex flex-row items-center"
+		>
+			<label for="selected_date_range">~when:</label>
+			<select
+				_="
+				on load 
+					if me.value == 'placeholder' add .text-gray-400 to me
+				end
+				on change
+				if me.value == 'placeholder'
+					add .text-gray-400 to me
+				else
+					remove .text-gray-400 from me
+				end
+				"
+				hx-trigger="change"
+				hx-get="/daterange/input"
+				hx-target="#date-range-filter"
+				hx-swap="innerHTML"
+				hx-include="this"
+				hx-params
+				class="appearance-none bg-transparent"
+				name="date_range_type"
+			>
+				for _, option := range greed.DateRangePickerOptions {
+					<option
+						disabled?={ option.First == "placeholder" }
+						selected?={ option.First == defaultOption.First }
+						value={ option.First }
+					>{ option.Second }</option>
+				}
+			</select>
+		</div>
+		<div
+			id="date-range-filter"
+		></div>
+	</div>
 }
 
 templ Page(content templ.Component) {

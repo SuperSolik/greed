@@ -33,7 +33,7 @@ func main() {
 
 	e.GET("/", func(c echo.Context) error {
 		var stats greed.Stats
-		if categoriesSpent, err := greed.GetExpensesByCategory(db); err != nil {
+		if categoriesSpent, err := greed.GetExpensesByCategory(db, greed.TransactionFilterDefault()); err != nil {
 			return err
 		} else {
 			stats.CategoriesSpent = categoriesSpent
@@ -46,6 +46,38 @@ func main() {
 		}
 
 		return renderTempl(c, views.Page(views.StatsContent(stats)))
+	})
+
+	e.GET("/stats/categories", func(c echo.Context) error {
+		dateStart := c.QueryParam("date_start")
+		dateEnd := c.QueryParam("date_end")
+
+		var filter greed.TransactionFilter
+
+		if dateStart != "" {
+			parsedDateStart, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateStart)
+			if err != nil {
+				return err
+			}
+			filter.DateStart = parsedDateStart.UTC()
+		}
+
+		if dateEnd != "" {
+			parsedDateEnd, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateEnd)
+			if err != nil {
+				return err
+			}
+			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
+			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
+		}
+
+		categoriesSpent, err := greed.GetExpensesByCategory(db, filter)
+
+		if err != nil {
+			return err
+		}
+
+		return renderTempl(c, views.CategoriesExpenses(categoriesSpent))
 	})
 
 	e.GET("/accounts", func(c echo.Context) error {
@@ -501,22 +533,22 @@ func main() {
 		now := time.Now().UTC()
 
 		switch rangeType {
-		case greed.Today:
+		case greed.Today.First:
 			return renderTempl(c, views.DateRangeInput(now, now, true))
-		case greed.Last7Days:
+		case greed.Last7Days.First:
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -6), now, true))
-		case greed.ThisWeek:
+		case greed.ThisWeek.First:
 			diff := [7]int{6, 0, 1, 2, 3, 4, 5}
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -diff[now.Weekday()]), now, true))
-		case greed.Last30Days:
+		case greed.Last30Days.First:
 			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -29), now, true))
-		case greed.ThisMonth:
+		case greed.ThisMonth.First:
 			startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 			return renderTempl(c, views.DateRangeInput(startOfMonth, now, true))
-		case greed.ThisYear:
+		case greed.ThisYear.First:
 			startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
 			return renderTempl(c, views.DateRangeInput(startOfYear, now, true))
-		case greed.Custom:
+		case greed.Custom.First:
 			return renderTempl(c, views.DateRangeInput(now, now, false))
 		}
 

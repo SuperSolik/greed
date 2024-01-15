@@ -668,20 +668,50 @@ func GetBalance[T DatabaseInterface](db T) ([]CurrencyAmount, error) {
 	return result, nil
 }
 
-func GetExpensesByCategory[T DatabaseInterface](db T) ([]Pair[string, []CategorySpent], error) {
+func GetExpensesByCategory[T DatabaseInterface](db T, filter TransactionFilter) ([]Pair[string, []CategorySpent], error) {
 	var result []Pair[string, []CategorySpent]
 
-	sql := `
-		select categories.id, categories.name, sum(abs(transactions.amount)) as total_amount, accounts.currency as currency
-		from transactions 
-		join categories on categories.id = transactions.category_id 
-		join accounts on accounts.id = transactions.account_id 
-		where transactions.amount < 0
-		group by category_id, currency
-		order by currency asc
-	`
+	query := sq.
+		Select(
+			"categories.id",
+			"categories.name",
+			"sum(abs(transactions.amount)) as total_amount",
+			"accounts.currency as currency",
+		).
+		From("transactions").
+		Join("categories on categories.id = transactions.category_id").
+		Join("accounts on accounts.id = transactions.account_id").
+		Where(sq.Lt{"transactions.amount": 0})
 
-	rows, err := db.Query(sql)
+	if !filter.DateStart.IsZero() {
+		query = query.Where(
+			sq.GtOrEq{
+				"datetime(transactions.created_at)": filter.DateStart.UTC(),
+			},
+		)
+	}
+
+	if !filter.DateEnd.IsZero() {
+		// DateEnd is exclusive
+		query = query.Where(
+			sq.Lt{
+				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
+			},
+		)
+	}
+	query = query.
+		GroupBy("category_id", "currency").
+		OrderBy("currency asc")
+
+	sql, args, err := query.ToSql()
+
+	log.Printf("Querying the categories spent with sql: %v", sql)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := db.Query(sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetch categories total spent failed: %v", err)
 	}
