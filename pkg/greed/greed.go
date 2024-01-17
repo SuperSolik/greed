@@ -3,6 +3,7 @@ package greed
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/labstack/gommon/log"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
@@ -782,6 +782,78 @@ func GetExpensesByCategory[T DatabaseInterface](db T, filter TransactionFilter) 
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error during categories spent iteration: %v", err)
+	}
+
+	return result, nil
+}
+
+func GetCashFlow[T DatabaseInterface](db T, filter TransactionFilter) ([]CashFlow, error) {
+	query := sq.
+		Select(
+			"sum(transactions.amount) as cash_flow",
+			"accounts.currency as currency",
+		).
+		From("transactions").
+		Join("accounts on accounts.id = transactions.account_id")
+
+	if !filter.DateStart.IsZero() {
+		query = query.Where(
+			sq.GtOrEq{
+				"datetime(transactions.created_at)": filter.DateStart.UTC(),
+			},
+		)
+	}
+
+	if !filter.DateEnd.IsZero() {
+		// DateEnd is exclusive
+		query = query.Where(
+			sq.Lt{
+				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
+			},
+		)
+	}
+
+	query = query.GroupBy("currency")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Querying the cash flow with sql: %v", sql)
+
+	rows, err := db.Query(sql, args...)
+
+	if err != nil {
+		return nil, fmt.Errorf("fetch cash flow failed: %v", err)
+	}
+
+	var result []CashFlow
+
+	defer rows.Close()
+	for rows.Next() {
+		var ca CurrencyAmount
+		var cashFlow float64
+
+		if err := rows.Scan(&cashFlow, &ca.Currency); err != nil {
+			return nil, fmt.Errorf("fetch cash flow row failed: %v", err)
+		}
+
+		// float64 -> bigFloat
+
+		ca.Amount = big.NewFloat(cashFlow)
+
+		// check the sign
+		isPositive := ca.Amount.Sign() >= 0
+
+		// convert to abs value for repr
+		ca.Amount.Abs(ca.Amount)
+
+		result = append(result, CashFlow{Value: ca, Positive: isPositive})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during cash flow iteration: %v", err)
 	}
 
 	return result, nil

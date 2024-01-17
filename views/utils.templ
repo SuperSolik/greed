@@ -2,7 +2,7 @@ package views
 
 import "time"
 import "fmt"
-import "supersolik/greed/pkg"
+import "supersolik/greed/pkg/greed"
 
 templ EditIndicator() {
 	<span class="text-sm">*</span>
@@ -105,7 +105,14 @@ templ DateRangeInput(dateStart, dateEnd time.Time, disabled bool) {
 
 templ DateRangePicker(defaultOption greed.DateRangePickerOption) {
 	<div
+		id="date-range-picker"
 		class="flex flex-row items-center space-x-2"
+		hx-trigger="change from:find select"
+		hx-get="/daterange/input"
+		hx-target="find #date-range-filter"
+		hx-swap="innerHTML"
+		hx-include="find select"
+		hx-params="*"
 	>
 		<div
 			class="flex flex-row items-center"
@@ -123,12 +130,6 @@ templ DateRangePicker(defaultOption greed.DateRangePickerOption) {
 					remove .text-gray-400 from me
 				end
 				"
-				hx-trigger="change"
-				hx-get="/daterange/input"
-				hx-target="#date-range-filter"
-				hx-swap="innerHTML"
-				hx-include="this"
-				hx-params
 				class="appearance-none bg-transparent"
 				name="date_range_type"
 			>

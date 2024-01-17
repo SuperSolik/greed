@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	greed "supersolik/greed/pkg"
+	"supersolik/greed/pkg/greed"
 	"time"
 )
 

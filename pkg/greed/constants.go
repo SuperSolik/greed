@@ -13,7 +13,7 @@ var (
 	NotSelected = DateRangePickerOption{First: "placeholder", Second: "date filter..."}
 	None        = DateRangePickerOption{First: "none", Second: "-"}
 	Today       = DateRangePickerOption{First: "today", Second: "today"}
-	ThisWeek    = DateRangePickerOption{First: "this_week", Second: "this_week"}
+	ThisWeek    = DateRangePickerOption{First: "this_week", Second: "this week"}
 	ThisMonth   = DateRangePickerOption{First: "this_month", Second: "this month"}
 	ThisYear    = DateRangePickerOption{First: "this_year", Second: "this year"}
 	Last7Days   = DateRangePickerOption{First: "last_7_days", Second: "last 7 days"}

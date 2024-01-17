@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	greed "supersolik/greed/pkg"
+	"supersolik/greed/pkg/greed"
 	"supersolik/greed/views"
 	"time"
 
@@ -33,10 +33,19 @@ func main() {
 
 	e.GET("/", func(c echo.Context) error {
 		var stats greed.Stats
-		if categoriesSpent, err := greed.GetExpensesByCategory(db, greed.TransactionFilterDefault()); err != nil {
+
+		filter := greed.TransactionFilterDefault()
+
+		if categoriesSpent, err := greed.GetExpensesByCategory(db, filter); err != nil {
 			return err
 		} else {
 			stats.CategoriesSpent = categoriesSpent
+		}
+
+		if cashFlow, err := greed.GetCashFlow(db, filter); err != nil {
+			return err
+		} else {
+			stats.CashFlow = cashFlow
 		}
 
 		if balance, err := greed.GetBalance(db); err != nil {
@@ -78,6 +87,36 @@ func main() {
 		}
 
 		return renderTempl(c, views.CategoriesExpenses(categoriesSpent))
+	})
+
+	e.GET("/stats/cashflow", func(c echo.Context) error {
+		dateStart := c.QueryParam("date_start")
+		dateEnd := c.QueryParam("date_end")
+
+		var filter greed.TransactionFilter
+
+		if dateStart != "" {
+			parsedDateStart, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateStart)
+			if err != nil {
+				return err
+			}
+			filter.DateStart = parsedDateStart.UTC()
+		}
+
+		if dateEnd != "" {
+			parsedDateEnd, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateEnd)
+			if err != nil {
+				return err
+			}
+			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
+			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
+		}
+
+		if cashFlow, err := greed.GetCashFlow(db, filter); err != nil {
+			return err
+		} else {
+			return renderTempl(c, views.CashFlow(cashFlow))
+		}
 	})
 
 	e.GET("/accounts", func(c echo.Context) error {
