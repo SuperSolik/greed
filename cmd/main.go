@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"supersolik/greed/pkg/greed"
-	"supersolik/greed/views"
+	"supersolik/greed/pkg/views"
 	"time"
 
 	"github.com/a-h/templ"
