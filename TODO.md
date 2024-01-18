@@ -25,6 +25,7 @@
 - [ ] support for terms (somehow) in active search
 - [ ] auth (signin, signup, sessions) + user based logic
 - [ ] db indices on searchable fields
+- [ ] create `<relative-time></relative-time>` web component to render local time (instead of hyperscript hack), inspiration - https://www.npmjs.com/package/@github/relative-time-element
 
 ## transactions filtering
 - [x] datetime ranges
