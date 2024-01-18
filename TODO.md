@@ -6,7 +6,7 @@
 - [x] transactions search (`LIKE %<value>%` by account name, description, categories)
 - [x] rework db logic to support both db handle and transaction handle somehow - used interface to conform both sql.Tx and sql.DB
 - [x] implement db transactions on transaction create/update (to update account as well) 
-- [ ] main screen with stats
+- [x] main screen with stats
 - [ ] rework layout for mobile screen
     - [ ] center content
     - [ ] roll out custom account div-based card
@@ -23,6 +23,8 @@
 - [ ] active search for accounts
 - [ ] accounts filtering by currency
 - [ ] support for terms (somehow) in active search
+- [ ] auth (signin, signup, sessions) + user based logic
+- [ ] db indices on searchable fields
 
 ## transactions filtering
 - [x] datetime ranges
