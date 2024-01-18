@@ -2,6 +2,7 @@ package greed
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -214,12 +215,16 @@ func DeleteAccount[T DatabaseInterface](db T, accountId int64) error {
 	return nil
 }
 
+type DateRange struct {
+	DateStart time.Time
+	DateEnd   time.Time
+}
+
 type TransactionFilter struct {
 	Page          uint64
 	PageSize      uint64
 	Search        string
-	DateStart     time.Time
-	DateEnd       time.Time
+	DateRange     DateRange
 	FilterExpense bool
 	FilterIncome  bool
 }
@@ -248,12 +253,12 @@ func (f TransactionFilter) BuildQueryParams() string {
 		params = append(params, fmt.Sprintf("search=%s", f.Search))
 	}
 
-	if !f.DateStart.IsZero() {
-		params = append(params, fmt.Sprintf("date_start=%s", f.DateStart.UTC().Format(time.DateOnly)))
+	if !f.DateRange.DateStart.IsZero() {
+		params = append(params, fmt.Sprintf("date_start=%s", f.DateRange.DateStart.UTC().Format(time.DateOnly)))
 	}
 
-	if !f.DateEnd.IsZero() {
-		params = append(params, fmt.Sprintf("date_end=%s", f.DateEnd.UTC().Format(time.DateOnly)))
+	if !f.DateRange.DateEnd.IsZero() {
+		params = append(params, fmt.Sprintf("date_end=%s", f.DateRange.DateEnd.UTC().Format(time.DateOnly)))
 	}
 
 	return "?" + strings.Join(params, "&")
@@ -302,19 +307,19 @@ func GetTransactions[T DatabaseInterface](db T, filter TransactionFilter) ([]Tra
 		})
 	}
 
-	if !filter.DateStart.IsZero() {
+	if !filter.DateRange.DateStart.IsZero() {
 		query = query.Where(
 			sq.GtOrEq{
-				"datetime(transactions.created_at)": filter.DateStart.UTC(),
+				"datetime(transactions.created_at)": filter.DateRange.DateStart.UTC(),
 			},
 		)
 	}
 
-	if !filter.DateEnd.IsZero() {
-		// DateEnd is exclusive
+	if !filter.DateRange.DateEnd.IsZero() {
+		// DateRange.DateEnd is exclusive
 		query = query.Where(
 			sq.Lt{
-				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
+				"datetime(transactions.created_at)": filter.DateRange.DateEnd.UTC(),
 			},
 		)
 	}
@@ -602,6 +607,36 @@ func DeleteTransaction[T DatabaseInterface](db T, transactionId int64) error {
 	return nil
 }
 
+func DeleteTransactionWithRecalc(db *sql.DB, transactionId int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	transaction, err := GetTransactionById(tx, transactionId)
+
+	if err != nil {
+		return err
+	}
+
+	if err := DeleteTransaction(tx, transactionId); err != nil {
+		return err
+	}
+
+	account, err := GetAccountById(tx, transaction.Account.Id)
+	account.Amount.Sub(account.Amount, transaction.Amount)
+
+	if _, err := UpdateAccount(tx, account); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
 func GetCategories[T DatabaseInterface](db T) ([]Category, error) {
 	// An albums slice to hold data from returned rows.
 	var categories []Category
@@ -686,7 +721,7 @@ func GetBalance[T DatabaseInterface](db T) ([]CurrencyAmount, error) {
 	return result, nil
 }
 
-func GetExpensesByCategory[T DatabaseInterface](db T, filter TransactionFilter) ([]Pair[string, []CategorySpent], error) {
+func GetExpensesByCategory[T DatabaseInterface](db T, dateRange DateRange) ([]Pair[string, []CategorySpent], error) {
 	var result []Pair[string, []CategorySpent]
 
 	query := sq.
@@ -701,19 +736,19 @@ func GetExpensesByCategory[T DatabaseInterface](db T, filter TransactionFilter) 
 		Join("accounts on accounts.id = transactions.account_id").
 		Where(sq.Lt{"transactions.amount": 0})
 
-	if !filter.DateStart.IsZero() {
+	if !dateRange.DateStart.IsZero() {
 		query = query.Where(
 			sq.GtOrEq{
-				"datetime(transactions.created_at)": filter.DateStart.UTC(),
+				"datetime(transactions.created_at)": dateRange.DateStart.UTC(),
 			},
 		)
 	}
 
-	if !filter.DateEnd.IsZero() {
-		// DateEnd is exclusive
+	if !dateRange.DateEnd.IsZero() {
+		// DateRange.DateEnd is exclusive
 		query = query.Where(
 			sq.Lt{
-				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
+				"datetime(transactions.created_at)": dateRange.DateEnd.UTC(),
 			},
 		)
 	}
@@ -787,7 +822,7 @@ func GetExpensesByCategory[T DatabaseInterface](db T, filter TransactionFilter) 
 	return result, nil
 }
 
-func GetCashFlow[T DatabaseInterface](db T, filter TransactionFilter) ([]CashFlow, error) {
+func GetCashFlow[T DatabaseInterface](db T, dateRange DateRange) ([]CashFlow, error) {
 	query := sq.
 		Select(
 			"sum(transactions.amount) as cash_flow",
@@ -796,19 +831,19 @@ func GetCashFlow[T DatabaseInterface](db T, filter TransactionFilter) ([]CashFlo
 		From("transactions").
 		Join("accounts on accounts.id = transactions.account_id")
 
-	if !filter.DateStart.IsZero() {
+	if !dateRange.DateStart.IsZero() {
 		query = query.Where(
 			sq.GtOrEq{
-				"datetime(transactions.created_at)": filter.DateStart.UTC(),
+				"datetime(transactions.created_at)": dateRange.DateStart.UTC(),
 			},
 		)
 	}
 
-	if !filter.DateEnd.IsZero() {
-		// DateEnd is exclusive
+	if !dateRange.DateEnd.IsZero() {
+		// DateRange.DateEnd is exclusive
 		query = query.Where(
 			sq.Lt{
-				"datetime(transactions.created_at)": filter.DateEnd.UTC(),
+				"datetime(transactions.created_at)": dateRange.DateEnd.UTC(),
 			},
 		)
 	}
@@ -857,4 +892,28 @@ func GetCashFlow[T DatabaseInterface](db T, filter TransactionFilter) ([]CashFlo
 	}
 
 	return result, nil
+}
+
+func GetDateRange(rangeType DateRangeType) (DateRange, error) {
+	now := time.Now().UTC()
+
+	switch rangeType {
+	case Today, Custom:
+		return DateRange{now, now}, nil
+	case Last7Days:
+		return DateRange{now.AddDate(0, 0, -6), now}, nil
+	case ThisWeek:
+		diff := [7]int{6, 0, 1, 2, 3, 4, 5}
+		return DateRange{now.AddDate(0, 0, -diff[now.Weekday()]), now}, nil
+	case Last30Days:
+		return DateRange{now.AddDate(0, 0, -29), now}, nil
+	case ThisMonth:
+		startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return DateRange{startOfMonth, now}, nil
+	case ThisYear:
+		startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+		return DateRange{startOfYear, now}, nil
+	}
+
+	return DateRange{}, errors.New("unexpected date range type")
 }

@@ -90,24 +90,24 @@ templ DateTimePicker(args DateTimePickerArgs) {
 	</div>
 }
 
-templ DateRangeInput(dateStart, dateEnd time.Time, disabled bool) {
+templ DateRangeInput(dateRange greed.DateRange , disabled bool) {
 	<div class="flex flex-row space-x-2">
 		<div class="flex flex-row">
 			<span>~from:</span>
-			@DateTimePicker(DateTimePickerArgs{DateTime: dateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled})
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateRange.DateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled})
 		</div>
 		<div class="flex flex-row">
 			<span>~to:</span>
-			@DateTimePicker(DateTimePickerArgs{DateTime: dateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled})
+			@DateTimePicker(DateTimePickerArgs{DateTime: dateRange.DateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled})
 		</div>
 	</div>
 }
 
-templ DateRangePicker(defaultOption greed.DateRangePickerOption) {
+templ DateRangePicker(defaultOption greed.DateRangeType) {
 	<div
 		id="date-range-picker"
 		class="flex flex-row items-center space-x-2"
-		hx-trigger="change from:find select"
+		hx-trigger="load, change from:find select"
 		hx-get="/daterange/input"
 		hx-target="find #date-range-filter"
 		hx-swap="innerHTML"
@@ -135,9 +135,9 @@ templ DateRangePicker(defaultOption greed.DateRangePickerOption) {
 			>
 				for _, option := range greed.DateRangePickerOptions {
 					<option
-						disabled?={ option.First == "placeholder" }
-						selected?={ option.First == defaultOption.First }
-						value={ option.First }
+						disabled?={ option.First == greed.NotSelected }
+						selected?={ option.First == defaultOption }
+						value={ string(option.First) }
 					>{ option.Second }</option>
 				}
 			</select>

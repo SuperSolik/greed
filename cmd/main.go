@@ -33,16 +33,19 @@ func main() {
 
 	e.GET("/", func(c echo.Context) error {
 		var stats greed.Stats
+		defaultRangeType := greed.Last30Days
+		defaultDateRange, err := greed.GetDateRange(defaultRangeType)
+		if err != nil {
+			return err
+		}
 
-		filter := greed.TransactionFilterDefault()
-
-		if categoriesSpent, err := greed.GetExpensesByCategory(db, filter); err != nil {
+		if categoriesSpent, err := greed.GetExpensesByCategory(db, defaultDateRange); err != nil {
 			return err
 		} else {
 			stats.CategoriesSpent = categoriesSpent
 		}
 
-		if cashFlow, err := greed.GetCashFlow(db, filter); err != nil {
+		if cashFlow, err := greed.GetCashFlow(db, defaultDateRange); err != nil {
 			return err
 		} else {
 			stats.CashFlow = cashFlow
@@ -54,21 +57,21 @@ func main() {
 			stats.Balance = balance
 		}
 
-		return renderTempl(c, views.Page(views.StatsContent(stats)))
+		return renderTempl(c, views.Page(views.StatsContent(stats, defaultRangeType)))
 	})
 
 	e.GET("/stats/categories", func(c echo.Context) error {
 		dateStart := c.QueryParam("date_start")
 		dateEnd := c.QueryParam("date_end")
 
-		var filter greed.TransactionFilter
+		var dateRange greed.DateRange
 
 		if dateStart != "" {
 			parsedDateStart, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateStart)
 			if err != nil {
 				return err
 			}
-			filter.DateStart = parsedDateStart.UTC()
+			dateRange.DateStart = parsedDateStart.UTC()
 		}
 
 		if dateEnd != "" {
@@ -77,10 +80,10 @@ func main() {
 				return err
 			}
 			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
-			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
+			dateRange.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
 		}
 
-		categoriesSpent, err := greed.GetExpensesByCategory(db, filter)
+		categoriesSpent, err := greed.GetExpensesByCategory(db, dateRange)
 
 		if err != nil {
 			return err
@@ -93,14 +96,14 @@ func main() {
 		dateStart := c.QueryParam("date_start")
 		dateEnd := c.QueryParam("date_end")
 
-		var filter greed.TransactionFilter
+		var dateRange greed.DateRange
 
 		if dateStart != "" {
 			parsedDateStart, err := time.Parse(greed.DATE_INPUT_LAYOUT, dateStart)
 			if err != nil {
 				return err
 			}
-			filter.DateStart = parsedDateStart.UTC()
+			dateRange.DateStart = parsedDateStart.UTC()
 		}
 
 		if dateEnd != "" {
@@ -109,10 +112,10 @@ func main() {
 				return err
 			}
 			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
-			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
+			dateRange.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
 		}
 
-		if cashFlow, err := greed.GetCashFlow(db, filter); err != nil {
+		if cashFlow, err := greed.GetCashFlow(db, dateRange); err != nil {
 			return err
 		} else {
 			return renderTempl(c, views.CashFlow(cashFlow))
@@ -286,7 +289,7 @@ func main() {
 			if err != nil {
 				return err
 			}
-			filter.DateStart = parsedDateStart.UTC()
+			filter.DateRange.DateStart = parsedDateStart.UTC()
 		}
 
 		if dateEnd != "" {
@@ -295,7 +298,7 @@ func main() {
 				return err
 			}
 			// end date is exclusive in sql, so we need to add 1 day to include the end date itself
-			filter.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
+			filter.DateRange.DateEnd = parsedDateEnd.AddDate(0, 0, 1).UTC()
 		}
 
 		transactions, err := greed.GetTransactions(db, filter)
@@ -478,9 +481,7 @@ func main() {
 			return err
 		}
 
-		err = greed.DeleteTransaction(db, transactionId)
-
-		if err != nil {
+		if err = greed.DeleteTransactionWithRecalc(db, transactionId); err != nil {
 			return err
 		}
 
@@ -575,31 +576,13 @@ func main() {
 	})
 
 	e.GET("/daterange/input", func(c echo.Context) error {
-		rangeType := c.QueryParam("date_range_type")
+		rangeType := greed.DateRangeType(c.QueryParam("date_range_type"))
 
-		now := time.Now().UTC()
-
-		switch rangeType {
-		case greed.Today.First:
-			return renderTempl(c, views.DateRangeInput(now, now, true))
-		case greed.Last7Days.First:
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -6), now, true))
-		case greed.ThisWeek.First:
-			diff := [7]int{6, 0, 1, 2, 3, 4, 5}
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -diff[now.Weekday()]), now, true))
-		case greed.Last30Days.First:
-			return renderTempl(c, views.DateRangeInput(now.AddDate(0, 0, -29), now, true))
-		case greed.ThisMonth.First:
-			startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-			return renderTempl(c, views.DateRangeInput(startOfMonth, now, true))
-		case greed.ThisYear.First:
-			startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
-			return renderTempl(c, views.DateRangeInput(startOfYear, now, true))
-		case greed.Custom.First:
-			return renderTempl(c, views.DateRangeInput(now, now, false))
+		if dateRange, err := greed.GetDateRange(rangeType); err != nil {
+			return c.NoContent(http.StatusOK)
+		} else {
+			return renderTempl(c, views.DateRangeInput(dateRange, rangeType != greed.Custom))
 		}
-
-		return c.NoContent(http.StatusOK)
 	})
 
 	e.Logger.Fatal(e.Start("127.0.0.1:8080"))

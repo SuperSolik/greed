@@ -6,29 +6,29 @@ const DATE_NICE_LAYOUT = "02-01-2006"
 const TIME_INPUT_LAYOUT = "15:04"
 const DATETIME_INPUT_LAYOUT = "2006-01-02 15:04"
 
-type DateRangePickerOption = Pair[string, string]
+type DateRangeType string
+type DateRangePickerOption = Pair[DateRangeType, string]
 
-// enum for date range filter
-var (
-	NotSelected = DateRangePickerOption{First: "placeholder", Second: "date filter..."}
-	None        = DateRangePickerOption{First: "none", Second: "-"}
-	Today       = DateRangePickerOption{First: "today", Second: "today"}
-	ThisWeek    = DateRangePickerOption{First: "this_week", Second: "this week"}
-	ThisMonth   = DateRangePickerOption{First: "this_month", Second: "this month"}
-	ThisYear    = DateRangePickerOption{First: "this_year", Second: "this year"}
-	Last7Days   = DateRangePickerOption{First: "last_7_days", Second: "last 7 days"}
-	Last30Days  = DateRangePickerOption{First: "last_30_days", Second: "last 30 days"}
-	Custom      = DateRangePickerOption{First: "custom", Second: "custom"}
+const (
+	NotSelected DateRangeType = "placeholder"
+	None        DateRangeType = "none"
+	Today       DateRangeType = "today"
+	ThisWeek    DateRangeType = "this_week"
+	ThisMonth   DateRangeType = "this_month"
+	ThisYear    DateRangeType = "this_year"
+	Last7Days   DateRangeType = "last_7_days"
+	Last30Days  DateRangeType = "last_30_days"
+	Custom      DateRangeType = "custom"
 )
 
 var DateRangePickerOptions = []DateRangePickerOption{
-	NotSelected,
-	None,
-	Today,
-	ThisWeek,
-	ThisMonth,
-	ThisYear,
-	Last7Days,
-	Last30Days,
-	Custom,
+	{First: NotSelected, Second: "date filter..."},
+	{First: None, Second: "-"},
+	{First: Today, Second: "today"},
+	{First: ThisWeek, Second: "this week"},
+	{First: ThisMonth, Second: "this month"},
+	{First: ThisYear, Second: "this year"},
+	{First: Last7Days, Second: "last 7 days"},
+	{First: Last30Days, Second: "last 30 days"},
+	{First: Custom, Second: "custom"},
 }

@@ -37,7 +37,7 @@ templ CategoriesExpenses(groupedCategoriesSpent []greed.Pair[string, []greed.Cat
 	</div>
 }
 
-templ CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent]) {
+templ CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent], defaultRangeType greed.DateRangeType) {
 	<div
 		hx-get="/stats/categories"
 		hx-include="this"
@@ -50,7 +50,7 @@ templ CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []gr
 		<div class="font-medium">
 			list TotalExpenses[category, amount, currency]:
 		</div>
-		@DateRangePicker(greed.NotSelected)
+		@DateRangePicker(defaultRangeType)
 		@CategoriesExpenses(groupedCategoriesSpent)
 	</div>
 }
@@ -74,7 +74,7 @@ templ CashFlow(cashFlow []greed.CashFlow) {
 	</div>
 }
 
-templ CashFlowContent(cashFlow []greed.CashFlow) {
+templ CashFlowContent(cashFlow []greed.CashFlow, defaultDateRangeType greed.DateRangeType) {
 	<div
 		hx-get="/stats/cashflow"
 		hx-include="this"
@@ -87,7 +87,7 @@ templ CashFlowContent(cashFlow []greed.CashFlow) {
 		<div class="font-medium">
 			list CashFlow[amount, currency]:
 		</div>
-		@DateRangePicker(greed.NotSelected)
+		@DateRangePicker(defaultDateRangeType)
 		@CashFlow(cashFlow)
 	</div>
 }
@@ -112,16 +112,10 @@ templ BalanceContent(balances []greed.CurrencyAmount) {
 	</div>
 }
 
-templ Stats(stats greed.Stats) {
-	<div id="stats" class="space-y-3">
-		@BalanceContent(stats.Balance)
-		@CategoriesExpensesContent(stats.CategoriesSpent)
-		@CashFlowContent(stats.CashFlow)
-	</div>
-}
-
-templ StatsContent(stats greed.Stats) {
+templ StatsContent(stats greed.Stats, defaultDateRangeType greed.DateRangeType) {
 	<div class="p-3 space-y-3">
-		@Stats(stats)
+		@BalanceContent(stats.Balance)
+		@CategoriesExpensesContent(stats.CategoriesSpent, defaultDateRangeType)
+		@CashFlowContent(stats.CashFlow, defaultDateRangeType)
 	</div>
 }

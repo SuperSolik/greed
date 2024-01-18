@@ -284,7 +284,7 @@ func DateTimePicker(args DateTimePickerArgs) templ.Component {
 	})
 }
 
-func DateRangeInput(dateStart, dateEnd time.Time, disabled bool) templ.Component {
+func DateRangeInput(dateRange greed.DateRange, disabled bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -310,7 +310,7 @@ func DateRangeInput(dateStart, dateEnd time.Time, disabled bool) templ.Component
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = DateTimePicker(DateTimePickerArgs{DateTime: dateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DateTimePicker(DateTimePickerArgs{DateTime: dateRange.DateStart, DateInputName: "date_start", DateOnly: true, ClientLocal: false, Disabled: disabled}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -327,7 +327,7 @@ func DateRangeInput(dateStart, dateEnd time.Time, disabled bool) templ.Component
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = DateTimePicker(DateTimePickerArgs{DateTime: dateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DateTimePicker(DateTimePickerArgs{DateTime: dateRange.DateEnd, DateInputName: "date_end", DateOnly: true, ClientLocal: false, Disabled: disabled}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -342,7 +342,7 @@ func DateRangeInput(dateStart, dateEnd time.Time, disabled bool) templ.Component
 	})
 }
 
-func DateRangePicker(defaultOption greed.DateRangePickerOption) templ.Component {
+func DateRangePicker(defaultOption greed.DateRangeType) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -355,7 +355,7 @@ func DateRangePicker(defaultOption greed.DateRangePickerOption) templ.Component 
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"date-range-picker\" class=\"flex flex-row items-center space-x-2\" hx-trigger=\"change from:find select\" hx-get=\"/daterange/input\" hx-target=\"find #date-range-filter\" hx-swap=\"innerHTML\" hx-include=\"find select\" hx-params=\"*\"><div class=\"flex flex-row items-center\"><label for=\"selected_date_range\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"date-range-picker\" class=\"flex flex-row items-center space-x-2\" hx-trigger=\"load, change from:find select\" hx-get=\"/daterange/input\" hx-target=\"find #date-range-filter\" hx-swap=\"innerHTML\" hx-include=\"find select\" hx-params=\"*\"><div class=\"flex flex-row items-center\"><label for=\"selected_date_range\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -373,13 +373,13 @@ func DateRangePicker(defaultOption greed.DateRangePickerOption) templ.Component 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if option.First == "placeholder" {
+			if option.First == greed.NotSelected {
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" disabled")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			if option.First == defaultOption.First {
+			if option.First == defaultOption {
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" selected")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -389,7 +389,7 @@ func DateRangePicker(defaultOption greed.DateRangePickerOption) templ.Component 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(option.First))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(option.First)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

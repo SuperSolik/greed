@@ -175,7 +175,7 @@ func CategoriesExpenses(groupedCategoriesSpent []greed.Pair[string, []greed.Cate
 	})
 }
 
-func CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent]) templ.Component {
+func CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []greed.CategorySpent], defaultRangeType greed.DateRangeType) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -201,7 +201,7 @@ func CategoriesExpensesContent(groupedCategoriesSpent []greed.Pair[string, []gre
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = DateRangePicker(greed.NotSelected).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DateRangePicker(defaultRangeType).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -275,7 +275,7 @@ func CashFlow(cashFlow []greed.CashFlow) templ.Component {
 	})
 }
 
-func CashFlowContent(cashFlow []greed.CashFlow) templ.Component {
+func CashFlowContent(cashFlow []greed.CashFlow, defaultDateRangeType greed.DateRangeType) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -301,7 +301,7 @@ func CashFlowContent(cashFlow []greed.CashFlow) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = DateRangePicker(greed.NotSelected).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = DateRangePicker(defaultDateRangeType).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -389,7 +389,7 @@ func BalanceContent(balances []greed.CurrencyAmount) templ.Component {
 	})
 }
 
-func Stats(stats greed.Stats) templ.Component {
+func StatsContent(stats greed.Stats, defaultDateRangeType greed.DateRangeType) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -402,7 +402,7 @@ func Stats(stats greed.Stats) templ.Component {
 			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"stats\" class=\"space-y-3\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-3 space-y-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -410,43 +410,11 @@ func Stats(stats greed.Stats) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = CategoriesExpensesContent(stats.CategoriesSpent).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = CategoriesExpensesContent(stats.CategoriesSpent, defaultDateRangeType).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = CashFlowContent(stats.CashFlow).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !templ_7745c5c3_IsBuffer {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
-		}
-		return templ_7745c5c3_Err
-	})
-}
-
-func StatsContent(stats greed.Stats) templ.Component {
-	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-		if !templ_7745c5c3_IsBuffer {
-			templ_7745c5c3_Buffer = templ.GetBuffer()
-			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"p-3 space-y-3\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = Stats(stats).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = CashFlowContent(stats.CashFlow, defaultDateRangeType).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
