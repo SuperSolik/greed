@@ -77,7 +77,7 @@ func GetAccounts[T DatabaseInterface](db T) ([]Account, error) {
 	// An albums slice to hold data from returned rows.
 	var accounts []Account
 
-	rows, err := db.Query("select * from accounts order by id asc")
+	rows, err := db.Query("select * from accounts order by id desc")
 	if err != nil {
 		return nil, fmt.Errorf("fetch accounts failed: %v", err)
 	}

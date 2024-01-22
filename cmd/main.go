@@ -184,13 +184,11 @@ func main() {
 			return err
 		}
 
-		_, err = greed.CreateAccount(db, accountName, parsedAmount, currency, description)
-
-		if err != nil {
+		if account, err := greed.CreateAccount(db, accountName, parsedAmount, currency, description); err != nil {
 			return err
+		} else {
+			return renderTempl(c, views.Account(account))
 		}
-
-		return renderTempl(c, views.RefreshAnchor())
 	})
 
 	e.PUT("/accounts/:id", func(c echo.Context) error {
