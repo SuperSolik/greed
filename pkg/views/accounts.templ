@@ -91,7 +91,7 @@ templ AccountEdit(account greed.Account) {
 }
 
 templ AccountNew() {
-	<tr hidden id="new-account">
+	<tr id="new-account">
 		<td class="max-w-44 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
@@ -135,7 +135,7 @@ templ AccountNew() {
 				</button>
 				<span>|</span>
 				<button
-					_="on mouseenter toggle .uppercase until mouseleave end on click add @hidden to #new-account end"
+					_="on mouseenter toggle .uppercase until mouseleave end on click remove closest <tr/> end"
 					type="button"
 				>
 					-cancel
@@ -173,7 +173,14 @@ templ AccountsContent(accounts []greed.Account) {
 					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Currency</th>
 					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">Description</th>
 					<th class="font-normal tracking-wider pr-2 py-2 border-b border-solid border-black">
-						<button _="on mouseenter toggle .uppercase until mouseleave end on click remove @hidden from #new-account end" type="button">
+						<button
+							_="on mouseenter toggle .uppercase until mouseleave end"
+							type="button"
+							hx-trigger="click"
+							hx-get="/accounts/new"
+							hx-target="#accounts-body"
+							hx-swap="afterbegin"
+						>
 							[new+]
 						</button>
 					</th>
@@ -185,7 +192,6 @@ templ AccountsContent(accounts []greed.Account) {
 				hx-select-oob="#accounts-body:outerHTML"
 				hx-trigger="refreshContent delay:0.1s from:window"
 			>
-				@AccountNew()
 				for _, account := range accounts {
 					@Account(account)
 				}

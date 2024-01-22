@@ -237,6 +237,10 @@ func main() {
 		return renderTempl(c, views.RecountAnchor())
 	})
 
+	e.GET("/accounts/new", func(c echo.Context) error {
+		return renderTempl(c, views.AccountNew())
+	})
+
 	e.GET("/transactions/content", func(c echo.Context) error {
 		var filter greed.TransactionFilter
 

@@ -17,7 +17,7 @@
     Account     date    description
     ```
 - [ ] make new account card and edit account card the same thing, as I did for transactions
-- [ ] make new account form behave the same way as for transactions (send from server on request)
+- [x] make new account form behave the same way as for transactions (send from server on request)
 
 - [x] create `exchange` category (might not affects the cash flow stats? will figure it out later)
 - [ ] active search for accounts

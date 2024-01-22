@@ -318,7 +318,7 @@ func AccountNew() templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<tr hidden id=\"new-account\"><td class=\"max-w-44 pr-2 py-2 font-normal border-b border-solid border-black\"><div class=\"flex flex-row w-full items-center\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<tr id=\"new-account\"><td class=\"max-w-44 pr-2 py-2 font-normal border-b border-solid border-black\"><div class=\"flex flex-row w-full items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -404,7 +404,7 @@ func AccountNew() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span> <button _=\"on mouseenter toggle .uppercase until mouseleave end on click add @hidden to #new-account end\" type=\"button\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span> <button _=\"on mouseenter toggle .uppercase until mouseleave end on click remove closest &lt;tr/&gt; end\" type=\"button\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -513,7 +513,7 @@ func AccountsContent(accounts []greed.Account) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</th><th class=\"font-normal tracking-wider pr-2 py-2 border-b border-solid border-black\"><button _=\"on mouseenter toggle .uppercase until mouseleave end on click remove @hidden from #new-account end\" type=\"button\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</th><th class=\"font-normal tracking-wider pr-2 py-2 border-b border-solid border-black\"><button _=\"on mouseenter toggle .uppercase until mouseleave end\" type=\"button\" hx-trigger=\"click\" hx-get=\"/accounts/new\" hx-target=\"#accounts-body\" hx-swap=\"afterbegin\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -523,10 +523,6 @@ func AccountsContent(accounts []greed.Account) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button></th></tr></thead> <tbody id=\"accounts-body\" hx-get hx-select-oob=\"#accounts-body:outerHTML\" hx-trigger=\"refreshContent delay:0.1s from:window\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = AccountNew().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
