@@ -40,8 +40,8 @@ templ Account(account greed.Account) {
 	</tr>
 }
 
-templ AccountEdit(account greed.Account) {
-	<tr>
+templ AccountForm(account greed.Account, create bool) {
+	<tr id="new-account">
 		<td class="max-w-44 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
@@ -51,10 +51,27 @@ templ AccountEdit(account greed.Account) {
 		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
-				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ account.Amount.String() }/>
+				if account.Amount != nil {
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value={ account.Amount.String() }/>
+				} else {
+					<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value="0.0"/>
+				}
 			</div>
 		</td>
-		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">{ account.Currency }</td>
+		if create {
+			<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
+				<div class="flex flex-row w-full items-center">
+					@EditIndicator()
+					<select class="appearance-none bg-transparent w-full" name="currency">
+						for _, c := range greed.SupportedCurrencies {
+							<option value={ c }>{ c }</option>
+						}
+					</select>
+				</div>
+			</td>
+		} else {
+			<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">{ account.Currency }</td>
+		}
 		<td class="max-w-56 pr-2 py-2 font-normal border-b border-solid border-black">
 			<div class="flex flex-row w-full items-center">
 				@EditIndicator()
@@ -62,86 +79,54 @@ templ AccountEdit(account greed.Account) {
 			</div>
 		</td>
 		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="h-full flex">
-				<span>(</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-put={ fmt.Sprintf("/accounts/%v", account.Id) }
-					hx-target="closest tr"
-					hx-include="closest tr"
-					hx-swap="outerHTML"
-				>
-					+save
-				</button>
-				<span>|</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-get={ fmt.Sprintf("/accounts/%v", account.Id) }
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					-cancel
-				</button>
-				<span>)</span>
-			</div>
-		</td>
-	</tr>
-}
-
-templ AccountNew() {
-	<tr id="new-account">
-		<td class="max-w-44 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<input class="w-full" name="account_name" type="text" placeholder="account name" minlength="3" value=""/>
-			</div>
-		</td>
-		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<input class="w-full" name="amount" type="text" placeholder="amount" inputmode="decimal" value="0.0"/>
-			</div>
-		</td>
-		<td class="max-w-32 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<select class="appearance-none bg-transparent w-full" name="currency">
-					<option value="EUR">EUR</option>
-					<option value="USD">USD</option>
-					<option value="RSD">RSD</option>
-				</select>
-			</div>
-		</td>
-		<td class="max-w-56 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="flex flex-row w-full items-center">
-				@EditIndicator()
-				<input class="w-full" name="description" type="text" placeholder="description" value=""/>
-			</div>
-		</td>
-		<td class="w-fit max-w-52 pr-2 py-2 font-normal border-b border-solid border-black">
-			<div class="h-full flex">
-				<span>(</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave"
-					type="button"
-					hx-post="/accounts"
-					hx-include="closest tr"
-					hx-target="closest tr"
-					hx-swap="outerHTML"
-				>
-					+create
-				</button>
-				<span>|</span>
-				<button
-					_="on mouseenter toggle .uppercase until mouseleave end on click remove closest <tr/> end"
-					type="button"
-				>
-					-cancel
-				</button>
-				<span>)</span>
-			</div>
+			if create {
+				<div class="h-full flex">
+					<span>(</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-post="/accounts"
+						hx-include="closest tr"
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+					>
+						+create
+					</button>
+					<span>|</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave end on click remove closest <tr/> end"
+						type="button"
+					>
+						-cancel
+					</button>
+					<span>)</span>
+				</div>
+			} else {
+				<div class="h-full flex">
+					<span>(</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-put={ fmt.Sprintf("/accounts/%v", account.Id) }
+						hx-target="closest tr"
+						hx-include="closest tr"
+						hx-swap="outerHTML"
+					>
+						+save
+					</button>
+					<span>|</span>
+					<button
+						_="on mouseenter toggle .uppercase until mouseleave"
+						type="button"
+						hx-get={ fmt.Sprintf("/accounts/%v", account.Id) }
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+					>
+						-cancel
+					</button>
+					<span>)</span>
+				</div>
+			}
 		</td>
 	</tr>
 }

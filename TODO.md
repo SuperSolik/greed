@@ -16,7 +16,7 @@
     [Category]  amount  very long
     Account     date    description
     ```
-- [ ] make new account card and edit account card the same thing, as I did for transactions
+- [x] make new account card and edit account card the same thing, as I did for transactions
 - [x] make new account form behave the same way as for transactions (send from server on request)
 - [x] create `exchange` category (might not affects the cash flow stats? will figure it out later)
 - [ ] active search for accounts
@@ -25,6 +25,7 @@
 - [ ] auth (signin, signup, sessions) + user based logic
 - [ ] db indices on searchable fields
 - [ ] create `<relative-time></relative-time>` web component to render local time (instead of hyperscript hack), inspiration - https://www.npmjs.com/package/@github/relative-time-element
+- [ ] serve static files?
 
 ## transactions filtering
 - [x] datetime ranges

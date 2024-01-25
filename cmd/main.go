@@ -168,7 +168,7 @@ func main() {
 		}
 
 		if edit {
-			return renderTempl(c, views.AccountEdit(account))
+			return renderTempl(c, views.AccountForm(account, false))
 		}
 
 		return renderTempl(c, views.Account(account))
@@ -236,7 +236,7 @@ func main() {
 	})
 
 	e.GET("/accounts/new", func(c echo.Context) error {
-		return renderTempl(c, views.AccountNew())
+		return renderTempl(c, views.AccountForm(greed.Account{}, true))
 	})
 
 	e.GET("/transactions/content", func(c echo.Context) error {

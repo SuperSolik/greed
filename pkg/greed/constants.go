@@ -32,3 +32,11 @@ var DateRangePickerOptions = []DateRangePickerOption{
 	{First: Last30Days, Second: "last 30 days"},
 	{First: Custom, Second: "custom"},
 }
+
+var SupportedCurrencies = []string{
+	"USD",
+	"EUR",
+	"GBP",
+	"JPY",
+	"RSD",
+}
