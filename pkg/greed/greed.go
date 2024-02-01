@@ -4,16 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
+	sq "github.com/Masterminds/squirrel"
+	"github.com/labstack/gommon/log"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	"math/big"
+	_ "modernc.org/sqlite"
 	"os"
 	"sort"
 	"strings"
 	"time"
-
-	sq "github.com/Masterminds/squirrel"
-	_ "github.com/tursodatabase/libsql-client-go/libsql"
-	_ "modernc.org/sqlite"
 )
 
 type DatabaseInterface interface {

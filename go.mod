@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/a-h/templ v0.2.501
 	github.com/labstack/echo/v4 v4.11.4
+	github.com/labstack/gommon v0.4.2
 	github.com/tursodatabase/libsql-client-go v0.0.0-20231216154754-8383a53d618f
 	modernc.org/sqlite v1.28.0
 )
@@ -17,7 +18,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/libsql/sqlite-antlr4-parser v0.0.0-20230802215326-5cb5bb604475 // indirect
