@@ -2,17 +2,19 @@ package greed
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
-	sq "github.com/Masterminds/squirrel"
-	"github.com/labstack/gommon/log"
-	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	"math/big"
-	_ "modernc.org/sqlite"
 	"os"
 	"sort"
 	"strings"
 	"time"
+
+	sq "github.com/Masterminds/squirrel"
+	"github.com/labstack/gommon/log"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	_ "modernc.org/sqlite"
 )
 
 type DatabaseInterface interface {
@@ -49,27 +51,68 @@ func ConnectDb() (*sql.DB, error) {
 	return db, nil
 }
 
+type Jsonable interface {
+	ToJson() ([]byte, error)
+	FromJson([]byte) error
+}
+
 type Account struct {
-	Id          int64
-	Name        string
-	Amount      *big.Float
-	Currency    string
-	Description string
+	Id              int64  `json:"id"`
+	Name            string `json:"name"`
+	Amount          *big.Float
+	SerialzedAmount float64 `json:"amount"`
+	Currency        string  `json:"currency"`
+	Description     string  `json:"description"`
+}
+
+func (a *Account) ToJson() ([]byte, error) {
+	return json.Marshal(a)
+}
+
+func (a *Account) FromJson(jsonData []byte) error {
+	if err := json.Unmarshal(jsonData, a); err != nil {
+		return err
+	}
+
+	a.Amount = big.NewFloat(a.SerialzedAmount)
+	return nil
 }
 
 // repr of Transaction for rendering
 type Transaction struct {
-	Id          int64
-	Account     Account
-	Amount      *big.Float
-	Category    Category
-	CreatedAt   time.Time
-	Description string
+	Id              int64   `json:"id"`
+	Account         Account `json:"account"`
+	Amount          *big.Float
+	SerialzedAmount float64   `json:"amount"`
+	Category        Category  `json:"category"`
+	CreatedAt       time.Time `json:"created_at"`
+	Description     string    `json:"description"`
+}
+
+func (t *Transaction) ToJson() ([]byte, error) {
+	return json.Marshal(t)
+}
+
+func (t *Transaction) FromJson(jsonData []byte) error {
+	if err := json.Unmarshal(jsonData, t); err != nil {
+		return err
+	}
+
+	t.Amount = big.NewFloat(t.SerialzedAmount)
+	return nil
 }
 
 type Category struct {
-	Id   int64
-	Name string
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+func (c *Category) ToJson() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func (c *Category) FromJson(jsonData []byte) error {
+	return json.Unmarshal(jsonData, c)
 }
 
 func GetAccounts[T DatabaseInterface](db T) ([]Account, error) {

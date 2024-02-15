@@ -9,13 +9,12 @@ import (
 
 func main() {
 	db, err := greed.ConnectDb()
-	defer db.Close()
 
 	if err != nil {
 		log.Fatalf("Failed to connect to db: %v", greed.GetDbUrl())
 	}
 
-	e := server.BuildServer(db)
+	e := server.BuildWebApp(db)
 
 	e.Logger.Fatal(e.Start("127.0.0.1:8080"))
 }

@@ -22,10 +22,7 @@ func renderTempl(c echo.Context, t templ.Component) error {
 	return t.Render(context.Background(), c.Response().Writer)
 }
 
-func BuildServer(db *sql.DB) *echo.Echo {
-	e := echo.New()
-	e.Use(middleware.Logger())
-
+func createWebAppEndpoints(e *echo.Echo, db *sql.DB) {
 	e.GET("/", func(c echo.Context) error {
 		var stats greed.Stats
 		defaultRangeType := greed.Last30Days
@@ -581,6 +578,13 @@ func BuildServer(db *sql.DB) *echo.Echo {
 			return renderTempl(c, views.DateRangeInput(dateRange, rangeType != greed.Custom))
 		}
 	})
+}
+
+func BuildWebApp(db *sql.DB) *echo.Echo {
+	e := echo.New()
+	e.Use(middleware.Logger())
+
+	createWebAppEndpoints(e, db)
 
 	return e
 }
